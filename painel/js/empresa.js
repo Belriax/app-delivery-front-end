@@ -271,7 +271,7 @@ empresa.method = {
 
   // DRAG AND DROP - quando solta a imagem no cotainer
   handleDrop: (e) => {
-    var dt = e.dataTrasnfer;
+    var dt = e.dataTransfer;
     var files = dt.files;
 
     empresa.method.uploadLogo(files);
@@ -433,6 +433,40 @@ empresa.method = {
 
   // carrega os horário na tela
   carregarHorarios: (lista) => {
+
+    function formatarHora(hora) {
+      if (!hora) return "";
+
+      let s = String(hora).trim();
+
+      // Se já vier no formato HH:mm
+      if (/^\d{2}:\d{2}$/.test(s)) return s;
+
+      // Se vier HH:mm:ss → remove os segundos
+      if (/^\d{2}:\d{2}:\d{2}$/.test(s)) {
+        const [h, m] = s.split(":");
+        return `${h}:${m}`;
+      }
+
+      // Remove tudo que não for número
+      s = s.replace(/[^\d]/g, "");
+
+      // 3 dígitos → ex: 805 → 08:05
+      if (s.length === 3) {
+        const h = s.substring(0, 1).padStart(2, "0");
+        const m = s.substring(1).padStart(2, "0");
+        return `${h}:${m}`;
+      }
+
+      // 4 dígitos → ex: 1305 → 13:05
+      if (s.length === 4) {
+        const h = s.substring(0, 2);
+        const m = s.substring(2, 4);
+        return `${h}:${m}`;
+      }
+
+      return "";
+    };
 
     if(lista.length > 0) {
 
