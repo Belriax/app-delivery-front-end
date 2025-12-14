@@ -219,6 +219,13 @@ cardapio.method = {
 					btnRemover = '';
 				}
 
+				let badgeOpcionais = '';
+
+				if (e.opcionais > 0) {
+					badgeOpcionais = `<span class="badge-adicionais">${e.opcionais}</span>`;
+				}
+
+
 				let temp = cardapio.template.produto.replace(/\${id}/g, e.idproduto,)
 					.replace(/\${imagem}/g, imagem,)
 					.replace(/\${nome}/g, e.nome,)
@@ -227,9 +234,12 @@ cardapio.method = {
 					.replace(/\${idcategoria}/g, idcategoria,)
 					.replace(/\${btnEditar}/g, btnEditar,)
 					.replace(/\${btnRemover}/g, btnRemover,)
-					.replace(/\${opcionais}/g, e.opcionais > 0 ? `<span class="badge-adicionais">${e.opcionais}</span>` : '');
+					// .replace(/\${opcionais}/g, e.opcionais > 0 ? `<span class="badge-adicionais">${e.opcionais}</span>` : '')
+					.replace(/\${opcionais}/g, badgeOpcionais);
 
 				$('#listaProdutos-' + idcategoria).append(temp);
+
+				cardapio.method.buscarContagemOpcionais(e.idproduto);
 
 				if ((i + 1) == lista.length) {
 					// inicia o tooltip
@@ -250,6 +260,84 @@ cardapio.method = {
 			// nenhum produto encontrado
 		}
 	},
+
+buscarContagemOpcionais: (idproduto) => {
+    // Busca os opcionais para contar os itens
+    app.method.get(`/opcional/produto/${idproduto}`,
+        (response) => {
+            if (response.status === 'success' && response.data) {
+                // Conta os itens
+                const quantidade = response.data.length;
+                
+                // Atualiza o badge no DOM
+                cardapio.method.atualizarBadgeOpcionaisDOM(idproduto, quantidade);
+            }
+        },
+        (error) => {
+            console.error('Erro ao buscar contagem:', error);
+        }
+    );
+},
+
+	// Atualizar badge fazendo requisição para obter todos os opcionais
+atualizarBadgeOpcionais: (idcategoria, idproduto) => {
+    
+    // Busca os opcionais do produto
+    app.method.get(`/opcional/produto/${idproduto}`,
+        (response) => {
+					console.log('Resposta API:', response);
+            if (response.status === 'error') {
+                console.error('Erro ao buscar opcionais:', response.message);
+                return;
+            }
+            
+            // Conta quantos opcionais existem
+            const quantidade = response.data ? response.data.length : 0;
+            
+            // Atualiza o badge no DOM
+            cardapio.method.atualizarBadgeOpcionaisDOM(idproduto, quantidade);
+        },
+        (error) => {
+            console.error('Erro na requisição:', error);
+        }
+    );
+},
+
+// Atualiza o badge diretamente no DOM
+atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
+    // Seleciona o card do produto específico
+    const card = document.querySelector(`.card[data-idproduto="${idproduto}"]`);
+    
+    if (!card) {
+        console.error('Produto não encontrado no DOM');
+        return;
+    }
+    
+    // Localiza o link de opcionais dentro do card
+    const linkOpcionais = card.querySelector('.actions a[onclick*="abrirModalOpcionaisProduto"]');
+    
+    if (!linkOpcionais) {
+        console.error('Link de opcionais não encontrado');
+        return;
+    }
+    
+    // Remove TODOS os badges existentes (pode haver mais de um)
+    const badgesExistentes = linkOpcionais.querySelectorAll('.badge-adicionais');
+    badgesExistentes.forEach(badge => badge.remove());
+    
+    // Adiciona o novo badge SOMENTE se houver opcionais (quantidade > 0)
+    if (quantidade > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'badge-adicionais';
+        badge.textContent = quantidade;
+        
+        // Insere o badge antes do ícone
+        const icone = linkOpcionais.querySelector('i');
+        if (icone) {
+            linkOpcionais.insertBefore(badge, icone);
+        }
+    }
+},
 
 	// método que atualiza a ordem das categorias;
 	atualizarOrdemCategoria: () => {
@@ -740,7 +828,7 @@ cardapio.method = {
 	},
 
 
-	obterOpcicionaisProduto: (idproduto) => {
+		obterOpcicionaisProduto: (idproduto) => {
 
 		app.method.loading(true);		
 
@@ -896,6 +984,8 @@ cardapio.method = {
 
 				$("#modalRemoverOpcionalItem").modal('hide');
 
+				cardapio.method.atualizarBadgeOpcionais(CATEGORIA_ID, PRODUTO_ID);
+
 				cardapio.method.abrirModalOpcionaisProduto(CATEGORIA_ID, PRODUTO_ID);
 			},
 			(error) => {
@@ -1046,6 +1136,8 @@ cardapio.method = {
 				}
 				app.method.mensagem(response.message, 'green');
 
+				cardapio.method.atualizarBadgeOpcionais(CATEGORIA_ID, PRODUTO_ID);
+
 				$("#modalAddOpcionalProduto").modal('hide');
 				cardapio.method.abrirModalOpcionaisProduto(CATEGORIA_ID, PRODUTO_ID);
 			},
@@ -1054,7 +1146,6 @@ cardapio.method = {
 				app.method.loading(false);
 			},
 		);
-
 	},
 
 	// seta o checkbox para a opção selecionada;

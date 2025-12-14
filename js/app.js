@@ -151,7 +151,7 @@ app.method = {
   },
 
   // grava valores no localstorage
-  gravarValorsecao: (valor, local) => {
+  gravarValorSessao: (valor, local) => {
     localStorage[local] = valor;
   },
 

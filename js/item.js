@@ -333,7 +333,7 @@ item.method = {
       opcionais: OPCIONAIS_SELECIONADOS
     })
 
-    app.method.gravarValorsecao(JSON.stringify(cart), 'cart');
+    app.method.gravarValorSessao(JSON.stringify(cart), 'cart');
 
     app.method.mensagem('Item adicionado ao carrinho.', 'green');
 

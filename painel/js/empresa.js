@@ -156,7 +156,7 @@ empresa.method = {
         app.method.mensagem(response.message, 'green');
 
         // atualizar o localStorage
-        app.method.gravarValorsecao(nome, 'Nome');
+        app.method.gravarValorSessao(nome, 'Nome');
         empresa.method.obterDados();
         app.method.carregarDadosEmpresa();
 
@@ -197,7 +197,7 @@ empresa.method = {
         app.method.mensagem(response.message, 'green');
 
         // atualiza o valor no localstorage
-        app.method.gravarValorsecao(response.logotipo, 'Logo');
+        app.method.gravarValorSessao(response.logotipo, 'Logo');
         empresa.method.obterDados();
         app.method.carregarDadosEmpresa();
 

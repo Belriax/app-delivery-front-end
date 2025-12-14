@@ -53,10 +53,10 @@ login.method = {
         }
 
         if(response.status == 'success') {
-          app.method.gravarValorsecao(response.TokenAcesso, "token");
-          app.method.gravarValorsecao(response.Nome, "Nome");
-          app.method.gravarValorsecao(response.Email, "Email");
-          app.method.gravarValorsecao(response.Logo, "Logo");
+          app.method.gravarValorSessao(response.TokenAcesso, "token");
+          app.method.gravarValorSessao(response.Nome, "Nome");
+          app.method.gravarValorSessao(response.Email, "Email");
+          app.method.gravarValorSessao(response.Logo, "Logo");
 
           window.location.href = '/painel/home.html';
         }

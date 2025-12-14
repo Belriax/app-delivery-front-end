@@ -173,7 +173,7 @@ carrinho.method = {
           let outros = cart.itens.filter((e) => {return e.guid != PRODUTO_SELECIONADO});
           cart.itens = outros;
 
-          app.method.gravarValorsecao(JSON.stringify(cart), 'cart');
+          app.method.gravarValorSessao(JSON.stringify(cart), 'cart');
 
           carrinho.method.obterCarrinho();
 
@@ -519,7 +519,7 @@ carrinho.method = {
       complemento: complemento
     }
 
-    app.method.gravarValorsecao(JSON.stringify(dados), 'address');
+    app.method.gravarValorSessao(JSON.stringify(dados), 'address');
 
     carrinho.method.obterEndereco();
     carrinho.method.validarEnderecoSelecionado();
@@ -798,7 +798,7 @@ carrinho.method = {
             // salva o novo pedido
             dados.order = response.order;
 
-            app.method.gravarValorsecao(JSON.stringify(dados), 'order');
+            app.method.gravarValorSessao(JSON.stringify(dados), 'order');
 
             setTimeout(() => {
               localStorage.removeItem('cart');
