@@ -260,6 +260,9 @@
         document.querySelector('#container-endereco').classList.add('hidden');
     }
 
+    // carrega o botão de imprimir
+     document.querySelector('#container-action-footer').innerHTML += `<button onclick="pedido.method.imprimir()" type="button" class="btn btn-white btn-sm">Imprimir</button>`
+
     // carrega o botão final na modal (somente se for != de concluído ou recusado)
     if (data.idpedidostatus != 5 && data.idpedidostatus != 6) {
 
@@ -471,6 +474,45 @@
         }
       );
     }
+  },
+
+  imprimir: () => {
+    app.method.loading(true);
+
+    $("#content-print").addClass('print');
+    
+    const div = document.getElementById('content-print');
+
+    html2canvas(div).then(function (canvas) {  
+      $("#content-print").removeClass('print');
+
+      const imagem = canvas.toDataURL();
+      const novaJanela = window.open('', '_blank');
+      novaJanela.document.write(`
+        <html>
+          <head>
+            <title>Impressão</title>
+            <body style="margin: 0; padding: 0; text-align: center;">
+              <img src="${imagem}" style="max-width: 100%; height: auto;" />
+            </body>
+          </head>
+        </html>  
+      `);
+
+      // aguarde o carregamento completo da nova janelae acione a impressão
+      novaJanela.document.close();
+
+      app.method.loading(false);
+
+      setTimeout(function() {
+        novaJanela.focus();
+        novaJanela.print();
+        setTimeout(function() {
+          novaJanela.close();
+        }, 100);
+      }, 100); //delay para carregar o conteúdo da impressão
+
+    })
   },
 
  }
