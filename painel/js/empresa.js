@@ -433,40 +433,44 @@ empresa.method = {
 
   // carrega os horário na tela
   carregarHorarios: (lista) => {
-
+    
     function formatarHora(hora) {
       if (!hora) return "";
 
       let s = String(hora).trim();
 
-      // Se já vier no formato HH:mm
-      if (/^\d{2}:\d{2}$/.test(s)) return s;
-
-      // Se vier HH:mm:ss → remove os segundos
-      if (/^\d{2}:\d{2}:\d{2}$/.test(s)) {
-        const [h, m] = s.split(":");
-        return `${h}:${m}`;
-      }
-
-      // Remove tudo que não for número
+      // Remove tudo que não é número
       s = s.replace(/[^\d]/g, "");
 
-      // 3 dígitos → ex: 805 → 08:05
+      if (s.length === 0) return "";
+
+      // 1 dígito → inválido
+      if (s.length === 1) return "";
+
+      // 2 dígitos → 08 → 08:00
+      if (s.length === 2) {
+        const h = s.padStart(2, "0");
+        return `${h}:00`;
+      }
+
+      // 3 dígitos → 805 → 08:05
       if (s.length === 3) {
         const h = s.substring(0, 1).padStart(2, "0");
-        const m = s.substring(1).padStart(2, "0");
+        const m = s.substring(1, 3);
         return `${h}:${m}`;
       }
 
-      // 4 dígitos → ex: 1305 → 13:05
-      if (s.length === 4) {
+      // 4 dígitos → 0805 → 08:05
+      if (s.length >= 4) {
         const h = s.substring(0, 2);
         const m = s.substring(2, 4);
         return `${h}:${m}`;
       }
 
       return "";
-    };
+    }
+
+
 
     if(lista.length > 0) {
 
@@ -481,21 +485,16 @@ empresa.method = {
         htmlObject.id = `horario-${id}`;
         htmlObject.innerHTML = temp;
 
-        // const formatarHora = (hora) => {
-        //   if (!hora) return ''; // Se não houver hora definida, retorna vazio
-        //   let [h, m] = hora.split(':');
-        //   return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
-        // };
-
         // adiciona o horário na tela;
         document.getElementById("listaHorarios").appendChild(htmlObject);
 
         document.querySelector(`#diainicio-${id}`).value = e.diainicio;
         document.querySelector(`#diafim-${id}`).value = e.diafim;
-        document.querySelector(`#iniciohorarioum-${id}`).value = e.iniciohorarioum;
-        document.querySelector(`#fimhorarioum-${id}`).value = e.fimhorarioum;
-        document.querySelector(`#iniciohorariodois-${id}`).value = e.iniciohorariodois;
-        document.querySelector(`#fimhorariodois-${id}`).value = e.fimhorariodois;
+
+        document.querySelector(`#iniciohorarioum-${id}`).value = formatarHora(e.iniciohorarioum);
+        document.querySelector(`#fimhorarioum-${id}`).value = formatarHora(e.fimhorarioum);
+        document.querySelector(`#iniciohorariodois-${id}`).value = formatarHora(e.iniciohorariodois);
+        document.querySelector(`#fimhorariodois-${id}`).value = formatarHora(e.fimhorariodois);
 
       })
     }else{

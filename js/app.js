@@ -140,14 +140,18 @@ app.method = {
   validaToken: (login = false) => {
 
     var tokenAtual = app.method.obterValorSessao('token');
-    if (!login) return true;
+
+    if (!login) {
+      return true;
+    }
 
     if ((tokenAtual == undefined || tokenAtual == null || tokenAtual == "" || tokenAtual == "null") && !login) {
-      window.location.href = '/painel/login.html';
-      return false;
+        window.location.href = '/painel/login.html';
+        return false;
     }
 
     return true;
+
   },
 
   // grava valores no localstorage

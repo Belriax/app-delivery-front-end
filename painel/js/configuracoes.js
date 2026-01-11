@@ -732,12 +732,21 @@ config.method = {
         let dinheiro = response.data.filter((e) => { return e.idformapagamento == 2 });
         let cartaocredito = response.data.filter((e) => { return e.idformapagamento == 3 });
         let cartaodebito = response.data.filter((e) => { return e.idformapagamento == 4 });
+        let pagamentoonline = response.data.filter((e) => { return e.idformapagamento == 5 });
         
         // valida as configurações de retirada;
         config.method.changeOpcaoFormaPagamento(1, 'pix', pix[0].ativo);
         config.method.changeOpcaoFormaPagamento(2, 'dinheiro', dinheiro[0].ativo);
         config.method.changeOpcaoFormaPagamento(3, 'cartaocredito', cartaocredito[0].ativo);
         config.method.changeOpcaoFormaPagamento(4, 'cartaodebito', cartaodebito[0].ativo);
+        config.method.changeOpcaoFormaPagamento(5, 'pagamentoonline', pagamentoonline[0].ativo);
+
+        // exibe as configurações do MP
+        let publickey = response.config.publickey !== null ? response.config.publickey : '';
+        let accesstoken = response.config.accesstoken !== null ? response.config.accesstoken : '';
+
+        document.getElementById('txtPublicKey').value = publickey
+        document.getElementById('txtAccessToken').value = accesstoken
 
       },
       (error) => {
@@ -760,12 +769,20 @@ config.method = {
       if(isCheck == undefined) {
         config.method.salvarOpcaoFormaPagamento(id, true);
       }
+
+      if(id === 5) {
+        document.getElementById('container-config-mp').classList.remove('hidden');
+      }
     }
     else {
       document.querySelector('#chkFormaPagamento-' + input).checked = false;
       if(isCheck == undefined) {
         config.method.salvarOpcaoFormaPagamento(id, false);
-      }    
+      }
+
+      if(id === 5){
+        document.getElementById('container-config-mp').classList.add('hidden')
+      }
     }
   },
 
@@ -794,6 +811,47 @@ config.method = {
         console.log('error', error)
       }
     );
+  },
+
+  salvarConfigMP: () => {
+    
+    let publicKey = document.getElementById("txtPublicKey").value.trim()
+    let accessToken = document.getElementById("txtAccessToken").value.trim()
+
+    if (publicKey.length <= 0) {
+      app.method.mensagem("Informe o Public Key, por favor");
+      document.getElementById("txtPublicKey").focus();
+      return;
+    }
+
+    if (accessToken.length <= 0) {
+      app.method.mensagem("Informe o AccessToken, por favor");
+      document.getElementById("txtAccessToken").focus();
+      return;
+    }
+
+    app.method.loading(true);
+
+    let dados = {
+      publicKey: publicKey,
+      accessToken: accessToken,
+    }
+
+    app.method.post('/formapagamento/salvar/mercadopago', JSON.stringify(dados), 
+  
+    (response) => {
+      console.log('response', response)
+      app.method.loading(false);
+
+      if(response.status === 'error') {
+        app.method.mensagem(response.message)
+        return;
+      }
+
+      app.method.mensagem(response.message, 'green');
+    }  
+  )
+
   },
 };
 

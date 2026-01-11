@@ -16,6 +16,9 @@ var TROCO = 0;
 
 var MODAL_ENDERECO = new bootstrap.Modal(document.getElementById('modalEndereco'));
 
+var PAGAMENTO_ONLINE = false;
+
+
 carrinho.event = {
   init: () => {
     $(".cep").mask('00000-000');
@@ -535,7 +538,6 @@ carrinho.method = {
       var validacep = /^[0-9]{8}$/;
 
       // valida o formato do CEP;
-
       if(validacep.test(cep)){
         // cria um elemento javascript
         var script = document.createElement('script');
@@ -644,6 +646,22 @@ carrinho.method = {
 
   carregaFormasPagamento: (list) => {
     if(list.length > 0) {
+
+      let pagamentoonline = list.filter((e) => { return e.idformapagamento === 5 });
+
+      if(pagamentoonline.length > 0) {
+        
+        document.getElementById('container-como-pagar').classList.add('hidden');
+        document.getElementById('lblFazerPedido').innerText = 'Realizar Pagamento';
+        PAGAMENTO_ONLINE = true;
+
+      } else {
+
+        document.getElementById('container-como-pagar').classList.remove('hidden');
+        document.getElementById('lblFazerPedido').innerText = 'Fazer Pedido';
+        PAGAMENTO_ONLINE = false;
+
+      }
 
       list.forEach((e, i) => {
         
@@ -761,14 +779,6 @@ carrinho.method = {
         return;
       }
 
-      if(FORMA_SELECIONADA == null) {
-        app.method.mensagem("Selecione a forma de pagamento");
-        return;
-      }
-
-      // tudo ok, faz o pedido;
-      app.method.loading(true);
-
       let dados = {
         entrega: checkEntrega,
         retirada: checkRetirada,
@@ -777,13 +787,31 @@ carrinho.method = {
         idtaxaentregatipo: TAXAS_ENTREGA[0].idtaxaentregatipo,
         idtaxaentrega: TAXA_ATUAL_ID,
         taxaentrega: TAXA_ATUAL,
-        idformapagamento: FORMA_SELECIONADA.idformapagamento,
         troco: TROCO,
         nomecliente: nome,
         telefonecliente: celular,
       }
 
-      app.method.post('/pedido', JSON.stringify(dados),
+      if(PAGAMENTO_ONLINE){
+
+        dados.idformapagamento = 5;
+
+        app.method.gravarValorSessao(JSON.stringify(dados), 'sub-order');
+
+        window.location.href = ('/pagamento.html');
+
+      } else {
+
+        if(FORMA_SELECIONADA == null) {
+          app.method.mensagem("Selecione a forma de pagamento");
+          return;
+        }
+        dados.idformapagamento = FORMA_SELECIONADA.idformapagamento;
+
+        // tudo ok, faz o pedido;
+        app.method.loading(true);
+        
+        app.method.post('/pedido', JSON.stringify(dados),
           (response) => {
             console.log('response', response)
             app.method.loading(false);
@@ -811,15 +839,12 @@ carrinho.method = {
             app.method.loading(false);
           }, true
         );
-
-
+      }
 
     }else{
       app.method.mensagem("Nenhum item no carrinho.")
     }
   },
-
-
 }
 
 carrinho.template = {

@@ -240,7 +240,7 @@ cardapio.templates = {
   `,
   
   produto: `
-    <div class="card mb-2 item-cardapio animated fadeInUp" onclick="cardapio.method.abrirProduto('\${idproduto}')">
+    <div class="card mb-2 item-cardapio" onclick="cardapio.method.abrirProduto('\${idproduto}')">
       <div class="d-flex">
         <div class="container-img-produto" style="background-image: url('./public/images/\${imagem}'); background-size: cover;"></div>
         <div class="infos-produto">
