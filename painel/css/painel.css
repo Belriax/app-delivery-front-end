@@ -760,3 +760,29 @@ input:checked+.slider::before {
     height: 520px;
     ;
 }
+
+/* imprimir */
+
+#container-action-footer {
+    justify-content: space-between;
+}
+
+
+.print * {
+    background-color: #fff!important;
+    color: #000!important;
+}
+
+.print .card{
+    border: none!important;
+    box-shadow: none!important;
+    border-radius: 0px!important;
+    padding: 0px!important;
+}
+
+.print .container-dados-pedido {
+    border-bottom: 1px solid #000;
+}
+.print .footer-btn {
+    display: none!important;
+}

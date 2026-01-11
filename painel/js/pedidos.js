@@ -260,23 +260,23 @@
         document.querySelector('#container-endereco').classList.add('hidden');
     }
 
-    // carrega o botão de imprimir
-     document.querySelector('#container-action-footer').innerHTML += `<button onclick="pedido.method.imprimir()" type="button" class="btn btn-white btn-sm">Imprimir</button>`
+    // carregar o botão de imprimir
+    document.querySelector('#container-action-footer').innerHTML += `<button onclick="pedido.method.imprimir()" type="button" class="btn btn-white btn-sm">Imprimir</button>`
 
     // carrega o botão final na modal (somente se for != de concluído ou recusado)
     if (data.idpedidostatus != 5 && data.idpedidostatus != 6) {
 
       if (data.idpedidostatus == 1) {
-        document.querySelector('#container-action-footer').innerHTML = `<button onclick="pedido.method.moverPara(2, '${idpedido}')" type="button" class="btn btn-yellow btn-sm">Aceitar Pedido</button>`
+        document.querySelector('#container-action-footer').innerHTML += `<button onclick="pedido.method.moverPara(2, '${idpedido}')" type="button" class="btn btn-yellow btn-sm">Aceitar Pedido</button>`
       }
       if (data.idpedidostatus == 2) {
-        document.querySelector('#container-action-footer').innerHTML = `<button onclick="pedido.method.moverPara(3, '${idpedido}')" type="button" class="btn btn-yellow btn-sm">Preparar Pedido</button>`
+        document.querySelector('#container-action-footer').innerHTML += `<button onclick="pedido.method.moverPara(3, '${idpedido}')" type="button" class="btn btn-yellow btn-sm">Preparar Pedido</button>`
       }
       if (data.idpedidostatus == 3) {
-        document.querySelector('#container-action-footer').innerHTML = `<button onclick="pedido.method.moverPara(4, '${idpedido}')" type="button" class="btn btn-yellow btn-sm">Entregar Pedido</button>`
+        document.querySelector('#container-action-footer').innerHTML += `<button onclick="pedido.method.moverPara(4, '${idpedido}')" type="button" class="btn btn-yellow btn-sm">Entregar Pedido</button>`
       }
       if (data.idpedidostatus == 4) {
-        document.querySelector('#container-action-footer').innerHTML = `<button onclick="pedido.method.moverPara(5, '${idpedido}')" type="button" class="btn btn-yellow btn-sm">Concluir Pedido</button>`
+        document.querySelector('#container-action-footer').innerHTML += `<button onclick="pedido.method.moverPara(5, '${idpedido}')" type="button" class="btn btn-yellow btn-sm">Concluir Pedido</button>`
       }
 
     }
@@ -477,6 +477,7 @@
   },
 
   imprimir: () => {
+
     app.method.loading(true);
 
     $("#content-print").addClass('print');
@@ -574,11 +575,12 @@
           \${obs}
         </div> 
         <div class="detalhes-produto-edit" onclick="carrinho.method.abrirModalOpcoesProduto('\${guid}')">
-          <i class="fas fa-pencil-alt"></i>
+          
         </div>
       </div>
     </div>
   `,
+  // <i class="fas fa-pencil-alt"></i>
 
   opcional: `
     <div class="infos-produto">
