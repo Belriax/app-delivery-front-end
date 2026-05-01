@@ -6,6 +6,7 @@ var relatorio = {};
 
 var GRAFICO = undefined;
 
+
 relatorio.event = {
   init: () => {
     app.method.validaToken();
@@ -43,37 +44,40 @@ relatorio.method = {
   },
 
   bloquearDatasFiltrosFaturamento: () => {
-    var umAnoAtras = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+  const umAnoAtras = new Date();
+  umAnoAtras.setFullYear(umAnoAtras.getFullYear() - 1);
+  
+  const hoje = new Date();
+  const ultimoDiaMesAtual = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
-    let diaIni = umAnoAtras.getDate();
-    let mesIni = umAnoAtras.getMonth() + 1;
-    let anoIni = umAnoAtras.getFullYear();
+  const dataInicioFormatada = relatorio.method.formatarDataISO(umAnoAtras);
+  
+  const dataFimFormatada = relatorio.method.formatarDataISO(ultimoDiaMesAtual);
 
-    if(diaIni < 10) diaIni = '0' + diaIni;
-    if(mesIni < 10) mesIni = '0' + mesIni;
+  $("#txtDataInicioFaturamento").attr({
+    'min': dataInicioFormatada,
+    'max': dataFimFormatada
+  });
 
-    $("#txtDataInicioFaturamento").attr('min', `${anoIni}-${mesIni}-${diaIni}`);
-    $("#txtDataFimFaturamento").attr('min', `${anoIni}-${mesIni}-${diaIni}`);
+  $("#txtDataFimFaturamento").attr({
+    'min': dataInicioFormatada,
+    'max': dataFimFormatada
+  });
+},
 
-    var lastDay = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+// Função auxiliar para formatar data no padrão ISO (YYYY-MM-DD)
+formatarDataISO: (data) => {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+  
+  return `${ano}-${mes}-${dia}`;
+},
 
-    let diaFim = lastDay.getDate();
-    let mesFim = lastDay.getMonth() + 1;
-    let anoFim = lastDay.getFullYear();
-
-    if(diaFim < 10) diaFim = '0' + diaFim;
-    if(mesFim < 10) mesFim = '0' + mesFim;
-
-    $("#txtDataInicioFaturamento").attr('max', `${anoFim}-${mesFim}-${diaFim}`);
-    $("#txtDataFimFaturamento").attr('max', `${anoFim}-${mesFim}-${diaFim}`);
-
-  },
-
-  carregarDataAtualnoFiltroFaturamento: () => {
-
+  carregarDataAtualnoFiltroFaturamento: () => {   
     var date = new Date();
     var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-    var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    var lastDay = new Date();
 
     let diaIni = firstDay.getDate();
     let mesIni = firstDay.getMonth() + 1;
@@ -91,8 +95,6 @@ relatorio.method = {
 
     $("#txtDataInicioFaturamento").val(`${anoIni}-${mesIni}-${diaIni}`);
     $("#txtDataFimFaturamento").val(`${anoFim}-${mesFim}-${diaFim}`);
-    $("#ddlCategoriaFaturamento").val(0);
-
   },
   
   filtrarFaturamento: () => {
@@ -100,18 +102,23 @@ relatorio.method = {
     let datafim = $("#txtDataFimFaturamento").val();
     let categoria = $("#ddlCategoriaFaturamento").val();
 
-    if(datainicio == ''){
+    if(!datainicio){
       app.method.mensagem("Informe uma data de início válida")
       return;
     }
 
-    if(datafim == ''){
-      app.method.mensagem("Infomer uma data fim válida");
+    if(!datafim){
+      app.method.mensagem("Infome uma data fim válida");
+      return;
+    }
+
+    if (new Date(datainicio) > new Date(datafim)) {
+      app.method.mensagem("A data de início não pode ser maior que a data fim");
       return;
     }
 
     var dados = {
-      datafim: datainicio,
+      dataini: datainicio,
       datafim: datafim,
       categoria: categoria,
     }
@@ -128,15 +135,20 @@ relatorio.method = {
           app.method.mensagem(response.message);
           return;
         }
-        // app.method.mensagem(response.message, 'green');
 
-        relatorio.method.carregarGrafico(response.data);
-        relatorio.method.atualizarTotais(response.data);
+        if(response.data){
+          relatorio.method.carregarGrafico(response.data);
+          relatorio.method.atualizarTotais(response.data);
+        } else{
+          relatorio.method.atualizarTotais([]);
+        }       
 
       },
       (error) => {
         console.log("error", error);
         app.method.loading(false);
+        app.method.mensagem("Erro ao filtrar faturamento");
+        relatorio.method.atualizarTotais([]);
       }
     );
     
@@ -209,8 +221,8 @@ relatorio.method = {
             borderWidth: 6,
             fill: true,
             backgroundColor: '#fffdf7',
-            borderColor: '#ffbf00',
-            pointBackgroundColor: '#ffbf00',
+            borderColor: '#f58637',
+            pointBackgroundColor: '#f58637',
             pointRadius: 5,
             pointHoverRadius: 5,
             pointHitDetectionRadius: 35,
@@ -341,35 +353,41 @@ relatorio.method = {
     }else{
       $("#lblNenhumFaturamento").removeClass('hidden');
     }
-
-
   },
 
   atualizarTotais: (lista) => {
-
-    if(lista.length > 0){
-
-      totalFaturado = 0;
-      totalPedido = 0;
+    if(lista && lista.length > 0){
+      let totalFaturado = 0;
+      let totalPedido = 0;
 
       $.each(lista, (i, e) => {
-        totalFaturado += e.total,
-        totalPedido += e.pedidos
-      })
+        totalFaturado += parseFloat(e.total) || 0;
+        totalPedido += parseInt(e.pedidos) || 0;
+      });
 
-      let ticktMedio = parseFloat(totalFaturado / totalPedido).toFixed(2);
+      const ticketMedio = totalPedido > 0 
+        ? (totalFaturado / totalPedido).toFixed(2) 
+        : "0.00";
 
-      $("#lblTotalFaturamento").text(`R$: ${(totalFaturado).toFixed(2).replace('.', ',')}`);
+      $("#lblTotalFaturamento").text(`R$ ${totalFaturado.toFixed(2).replace('.', ',')}`);
       $("#lblTotalPedidos").text(totalPedido);
-      $("#lblTicketMedio").text(`R$: ${(ticktMedio).toString().replace('.', ',')}`);
-    }else{
+      $("#lblTicketMedio").text(`R$ ${ticketMedio.replace('.', ',')}`);
+      
+      $("#lblNenhumFaturamento").addClass('hidden');
 
-      $("#lblTotalFaturamento").text('-')
-      $("#lblTotalPedidos").text('-')
-      $("#lblTicketMedio").text('-')
+      console.log('Totais atualizados: ', {
+        totalFaturado: totalFaturado.toFixed(2),
+        totalPedido,
+        ticketMedio
+      });
+    } else {
+      $("#lblTotalFaturamento").text('R$ 0,00');
+      $("#lblTotalPedidos").text('0');
+      $("#lblTicketMedio").text('R$ 0,00');
+      
+      $("#lblNenhumFaturamento").removeClass('hidden');
     }
-
-  },
+},
 
   // ------------- Historico --------------
   bloquearDatasFiltrosHistorico: () => {
@@ -504,10 +522,10 @@ relatorio.method = {
 
         $("#listaPedidos").append(_temp);
 
-        valor_total += e.total;
+        valor_total += parseFloat(e.total);
 
         if((i + 1) == list.length){
-          $("#lblTotalSomaPedidos").text(`R$ ${(parseFloat(valor_total).toFixed(2)).toString().replace('.', ',')}`)
+          $("#lblTotalSomaPedidos").text(`R$ ${(parseFloat(valor_total).toFixed(2)).toString().replace('.', ',')}`);
 
           $("#data-table").DataTable({
             destroy: true,

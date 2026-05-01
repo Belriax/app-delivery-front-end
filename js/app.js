@@ -1,5 +1,7 @@
 var app = {};
 
+var DADOS_EMPRESA = {};
+
 app.event = {
 
   init: (home = false ) => {
@@ -222,46 +224,60 @@ app.method = {
     }
   },
 
-  validarEmpresaAberta: (home = false) => {
-    app.method.loading(true);
+ validarEmpresaAberta: (home = false) => {
+  app.method.loading(true);
 
-    app.method.get('/empresa/open',
-      (response) => {
-        console.log(response)
-        app.method.loading(false);
+  app.method.get('/empresa/open',
+    (response) => {
+      app.method.loading(false);
 
-        if(home) {
-          document.querySelector(".status-open").classList.remove('hidden');
+      const statusBox = document.querySelector("#boxStatusLoja");
+      const lblLojaAberta = document.querySelector("#lblLojaAberta");
+      const lblStatusComplemento = document.querySelector("#lblStatusComplemento");
+      const menuBottom = document.querySelector("#menu-bottom");
+      const menuBottomClosed = document.querySelector("#menu-bottom-closed");
+
+      if (home && statusBox) {
+        statusBox.classList.remove('hidden', 'closed', 'warning');
+      }
+
+      const aberta = response?.status === "success";
+      const data = response?.data || {};
+
+      if (home && statusBox) {
+        if (aberta) {
+          const fechaAs = data.fechaAs ? ` até ${data.fechaAs}` : '';
+          lblLojaAberta.innerText = data.mensagem || `Aberto${fechaAs}`;
+          lblStatusComplemento.innerText = data.complemento || 'Faça seu pedido agora';
+          statusBox.classList.remove('closed');
+        } else {
+          lblLojaAberta.innerText = data.mensagem || 'Fechado';
+          lblStatusComplemento.innerText = data.complemento || 'No momento não estamos aceitando pedidos';
+          statusBox.classList.add('closed');
         }
+      }
 
-        if(response.status === "error") {
-          
-          if(home){
-            document.querySelector(".status-open").classList.add('closed');
-            document.querySelector("#lblLojaAberta").innerText = 'Fechado';
-          }
+      if (menuBottom) {
+        menuBottom.classList.toggle('hidden', !aberta);
+      }
 
-          document.querySelector("#menu-bottom").remove();
-          document.querySelector("#menu-bottom-closed").classList.remove('hidden');
-          return;
-        }
+      if (menuBottomClosed) {
+        menuBottomClosed.classList.toggle('hidden', aberta);
+      }
 
-        if(home){
-          document.querySelector(".status-open").classList.remove('closed');
-          document.querySelector("#lblLojaAberta").innerText = 'Aberto';
-        }
+      const lblMenuFechadoInfo = document.querySelector("#lblMenuFechadoInfo");
 
-        document.querySelector("#menu-bottom").classList.remove('hidden');
-        document.querySelector("#menu-bottom-closed").classList.remove();        
-
-        
-      },
-      (error) => {
-        app.method.loading(false);
-        console.log('error', error)
-      }, true
-    )
-  },
+      if (!aberta && lblMenuFechadoInfo) {
+        lblMenuFechadoInfo.innerText = data.complemento || 'Voltaremos em breve';
+      }
+    },
+    (error) => {
+      app.method.loading(false);
+      console.log('error', error);
+    },
+    false
+  );
+},
 
   criarGuid: () => {
     return "00000000-0000-0000-0000-000000000000".replace(/[018]/g, c =>

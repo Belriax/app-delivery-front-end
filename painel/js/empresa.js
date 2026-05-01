@@ -3,7 +3,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 });
 
 var empresa = {};
-var DADOS_EMPRESA = {};
 
 var MODAL_UPLOAD = new bootstrap.Modal(document.getElementById('modalUpload'));
 
@@ -115,6 +114,18 @@ empresa.method = {
         document.getElementById("txtCidade").value = empresa.cidade;
         document.getElementById("txtComplemento").value = empresa.complemento;
         document.getElementById("ddlUf").value = empresa.estado;
+        
+        const dadosEmpresa = {
+          endereco: empresa.endereco || '',
+          numero: empresa.numero || '',
+          bairro: empresa.bairro || '',
+          cidade: empresa.cidade || '',
+          estado: empresa.estado || '',
+          cep: empresa.cep || '',
+          complemento: empresa.complemento || ''
+        };
+
+        app.method.gravarValorSessao(JSON.stringify(dadosEmpresa), 'endereco');
 
       },
 
@@ -396,7 +407,12 @@ empresa.method = {
         }
 
         app.method.mensagem(response.message, 'green');
-
+        app.method.gravarValorSessao(endereco, 'endereco');
+        app.method.gravarValorSessao(numero, 'numero');
+        app.method.gravarValorSessao(bairro, 'bairro');
+        app.method.gravarValorSessao(cidade, 'cidade');
+        app.method.gravarValorSessao(uf, 'estado');
+        app.method.gravarValorSessao(cep, 'cep');
         empresa.method.obterDados();
       },
 

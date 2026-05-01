@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pizza Food</title>
+  <title>Menu Creator - Item</title>
+  <link rel="icon" href="./img/logo.ico" type="x-icon">
 
   <link rel="stylesheet" href="./css/bootstrap.min.css">
   <link rel="stylesheet" href="./css/fontawesome.css">
@@ -46,6 +47,13 @@
         </div>
       </div>
     </div>
+
+    <div id="box-status-produto" class="card mb-2 hidden">
+      <div class="infos-produto">
+        <p class="name mb-1"><b id="titulo-status-produto"></b></p>
+        <p class="description mb-0" id="texto-status-produto"></p>
+      </div>
+    </div>
   </section>
 
   <section class="opcionais width-fix mt-5" id="listaOpcionais"></section>
@@ -80,8 +88,18 @@
     </a>
   </section>
 
+  <section class="menu-bottom disabled hidden" id="menu-bottom-esgotado">
+    <div>
+      <p class="mb-0"><b>Produto indisponível</b></p>
+      <small id="lblProdutoIndisponivel">Este item está sem estoque no momento.</small>
+    </div>
+  </section>
+
   <section class="menu-bottom disabled hidden" id="menu-bottom-closed">
-    <p class="mb-0"><b>Loja fechada no momento</b></p>
+    <div>
+      <p class="mb-0"><b>Loja fechada no momento</b></p>
+      <small id="lblMenuFechadoInfo">Confira nosso horário de atendimento</small>
+    </div>
   </section>
 
 

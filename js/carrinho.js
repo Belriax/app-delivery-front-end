@@ -6,7 +6,7 @@ var carrinho = {};
 var CARRINHO_ATUAL = [];
 var PRODUTO_SELECIONADO = '';
 var TEMPO_DEFAULT = '';
-var TAXAS_ENTREGA = '';
+var TAXAS_ENTREGA = [];
 var TAXA_ATUAL = 0;
 var TAXA_ATUAL_ID = null;
 
@@ -140,18 +140,20 @@ carrinho.method = {
 
       // TODO: validar taxa entrega
       if(TAXA_ATUAL > 0 ){
-        total += TAXA_ATUAL;
+        total += Number(TAXA_ATUAL);
 
         document.querySelector("#containerTaxaEntrega").classList.remove('hidden');
-        document.querySelector("#lblTaxaEntrega").innerText = `+ R$ ${(TAXA_ATUAL).toFixed(2).replace('.', ',')}`;
+        document.querySelector("#lblTaxaEntrega").innerText = `+ R$ ${parseFloat(TAXA_ATUAL).toFixed(2).replace('.', ',')}`;
 
       }else{
         document.querySelector("#containerTaxaEntrega").classList.add('hidden');
         document.querySelector("#lblTaxaEntrega").innerText = '-';
       }
 
-      document.querySelector("#lblTotalCarrinho").innerText = `R$ ${(total).toFixed(2).replace('.', ',')}`;
-      document.querySelector("#lblTotalCarrinhoBotao").innerText = `R$ ${(total).toFixed(2).replace('.', ',')}`;
+      console.log(document.querySelector("#lblTotalCarrinho"));
+
+      document.querySelector("#lblTotalCarrinho").innerText = `R$ ${parseFloat(total).toFixed(2).replace('.', ',')}`;
+      document.querySelector("#lblTotalCarrinhoBotao").innerText = `R$ ${parseFloat(total).toFixed(2).replace('.', ',')}`;
     }
   },
 
@@ -375,9 +377,19 @@ carrinho.method = {
 
         let endereco = JSON.parse(enderecoAtual);
 
+        let ruaNormalizada = endereco.endereco
+          .replace(/^R\.\s*/i, 'Rua ')
+          .replace(/^Av\.\s*/i, 'Avenida ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
         let dados = {
-          endereco: `${endereco.endereco}, ${endereco.numero}, ${endereco.bairro}, ${endereco.cidade}, ${endereco.estado}, ${endereco.cep}`,
-        }
+          endereco: `${ruaNormalizada}, ${endereco.numero} - Bairro ${endereco.bairro}, ${endereco.cidade} - ${endereco.estado}, ${endereco.cep}, Brasil`,
+          bairro: endereco.bairro,
+          cep: endereco.cep,
+          latitude: endereco.latitude || null,
+          longitude: endereco.longitude || null
+        };
 
         app.method.loading(true);
 
@@ -398,7 +410,7 @@ carrinho.method = {
 
             let filtro_taxa = TAXAS_ENTREGA.filter((e) => { return e.idtaxaentrega == TAXA_ATUAL_ID });
 
-            if(filtro_taxa > 0) {
+            if(filtro_taxa.length > 0) {
               let tempo = ''
         
               if((filtro_taxa[0].tempominimo != null && filtro_taxa[0].tempominimo > 0) &&
@@ -512,21 +524,65 @@ carrinho.method = {
       return;
     }
 
+    // let dados = {
+    //   cep: cep.replace(/\D/g,''),
+    //   endereco: endereco,
+    //   bairro: bairro,
+    //   cidade: cidade,
+    //   estado: uf,
+    //   numero: numero,
+    //   complemento: complemento
+    // }
+
     let dados = {
-      cep: cep,
-      endereco: endereco,
-      bairro: bairro,
-      cidade: cidade,
-      estado: uf,
-      numero: numero,
-      complemento: complemento
-    }
+      latitude: endereco.latitude,
+      longitude: endereco.longitude,
+      endereco: `${endereco.endereco}, ${endereco.numero} - Bairro ${endereco.bairro}, ${endereco.cidade} - ${endereco.estado}, ${endereco.cep}, Brasil`
+    };
 
     app.method.gravarValorSessao(JSON.stringify(dados), 'address');
 
-    carrinho.method.obterEndereco();
-    carrinho.method.validarEnderecoSelecionado();
-    MODAL_ENDERECO.hide();
+    if (!navigator.geolocation) {
+      app.method.mensagem('Seu navegador não suporta geolocalização.');
+      return;
+    }
+
+    app.method.loading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        let dados = {
+          cep: cep,
+          endereco: endereco,
+          bairro: bairro,
+          cidade: cidade,
+          estado: uf,
+          numero: numero,
+          complemento: complemento,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          precisaoGps: pos.coords.accuracy
+        };
+
+        app.method.gravarValorSessao(JSON.stringify(dados), 'address');
+
+        carrinho.method.obterEndereco();
+        carrinho.method.validarEnderecoSelecionado();
+
+        app.method.loading(false);
+        MODAL_ENDERECO.hide();
+      },
+      (error) => {
+        app.method.loading(false);
+        app.method.mensagem('Permita o acesso à localização para validar a entrega.');
+        console.log(error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
   },
 
   // API ViaCEP
@@ -779,6 +835,31 @@ carrinho.method = {
         return;
       }
 
+      let total = 0;
+    
+    CARRINHO_ATUAL.forEach((e) => {
+      let subTotal = 0;
+
+      if(e.opcionais.length > 0){
+        for (let index = 0; index < e.opcionais.length; index++){
+          let element = e.opcionais[index];
+          subTotal += element.valoropcional * e.quantidade;
+        }
+      }
+
+      subTotal += (e.quantidade * e.valor);
+      total += subTotal;
+    });
+
+    // Adiciona taxa de entrega ao total
+    if(TAXA_ATUAL > 0) {
+      total += Number(TAXA_ATUAL);
+    }
+
+    // Garante que o total está em formato numérico correto (sem formatação)
+    total = parseFloat(total.toFixed(2));
+    // ===== FIM DO CÁLCULO =====
+
       let dados = {
         entrega: checkEntrega,
         retirada: checkRetirada,
@@ -786,7 +867,8 @@ carrinho.method = {
         endereco: enderecoSelecionado,
         idtaxaentregatipo: TAXAS_ENTREGA[0].idtaxaentregatipo,
         idtaxaentrega: TAXA_ATUAL_ID,
-        taxaentrega: TAXA_ATUAL,
+        taxaentrega: parseFloat(Number(TAXA_ATUAL).toFixed(2)),
+        total: total,
         troco: TROCO,
         nomecliente: nome,
         telefonecliente: celular,

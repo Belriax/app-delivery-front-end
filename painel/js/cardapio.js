@@ -88,25 +88,55 @@ cardapio.method = {
 	},
 	// carrega as categorias na tela;
 	carregarCategorias: (lista) => {
-		if(lista.length > 0) {
+		$('#categoriasMenu').html('');
+
+		if (lista.length > 0) {
 			lista.forEach((e, i) => {
 				let icone = ICONES.filter((elem) => {
-						return (elem.name === e.icone);
-					}
-				);
+					return (elem.name === e.icone);
+				});
+
+				let badgeStatus = Number(e.ativo) === 1
+					? ''
+					: '<span class="badge bg-secondary ms-2">Inativa</span>';
+
+				let classeInativa = Number(e.ativo) === 1 ? '' : 'categoria-inativa';
 
 				let temp = cardapio.template.categoria
-				.replace(/\${id}/g, e.idcategoria)
-				.replace(/\${icone}/g, icone[0].icon)
-				.replace(/\${titulo}/g, e.nome);
+					.replace(/\${id}/g, e.idcategoria)
+					.replace(/\${icone}/g, icone[0].icon)
+					.replace(/\${titulo}/g, e.nome)
+					.replace(/\${badgeStatus}/g, badgeStatus)
+					.replace(/\${classeInativa}/g, classeInativa);
 
 				$('#categoriasMenu').append(temp);
 
-				// inicia o evento de tooltip;
-				if(i + 1 == lista.length) {
+				if (i + 1 == lista.length) {
 					$('[data-toggle="tooltip"]').tooltip();
 				}
 			});
+		}
+	},
+
+	atualizarTextoStatusCategoria: () => {
+		const ativo = $('#chkCategoriaAtiva').prop('checked');
+		const el = $('#txtStatusCategoria');
+
+		if (ativo) {
+			el.removeClass('inativo').addClass('ativo').text('Categoria ativa');
+		} else {
+			el.removeClass('ativo').addClass('inativo').text('Categoria inativa');
+		}
+	},
+
+	atualizarTextoStatusProduto: () => {
+		const ativo = $('#chkProdutoAtivo').prop('checked');
+		const el = $('#txtStatusProduto');
+
+		if (ativo) {
+			el.removeClass('inativo').addClass('ativo').text('Produto ativo');
+		} else {
+			el.removeClass('ativo').addClass('inativo').text('Produto inativo');
 		}
 	},
 
@@ -114,6 +144,7 @@ cardapio.method = {
 	salvarCategoria: () => {
 		let icone = $('#ddlIconeCategoria').val();
 		let nome = $('#txtNomeCategoria').val().trim();
+		let ativo = $('#chkCategoriaAtiva').prop('checked') ? 1 : 0;
 
 		if(icone == '-1') {
 			app.method.mensagem('Selecione ícone da categoria, por favor');
@@ -128,6 +159,7 @@ cardapio.method = {
 		let dados = {
 			icone: icone,
 			nome: nome,
+			ativo: ativo,
 			idcategoria: CATEGORIA_ID,
 		};
 
@@ -225,16 +257,27 @@ cardapio.method = {
 					badgeOpcionais = `<span class="badge-adicionais">${e.opcionais}</span>`;
 				}
 
+				let quantidadeProduto = parseInt(e.quantidade ?? 0);
+				let ativoProduto = parseInt(e.ativo ?? 1);
 
-				let temp = cardapio.template.produto.replace(/\${id}/g, e.idproduto,)
-					.replace(/\${imagem}/g, imagem,)
-					.replace(/\${nome}/g, e.nome,)
-					.replace(/\${descricao}/g, e.descricao,)
-					.replace(/\${preco}/g, e.valor.toFixed(2).replace('.', ','))
-					.replace(/\${idcategoria}/g, idcategoria,)
-					.replace(/\${btnEditar}/g, btnEditar,)
-					.replace(/\${btnRemover}/g, btnRemover,)
-					// .replace(/\${opcionais}/g, e.opcionais > 0 ? `<span class="badge-adicionais">${e.opcionais}</span>` : '')
+				let statusProduto = '';
+				if (ativoProduto !== 1) {
+					statusProduto = `<span class="badge bg-secondary ms-2">Inativo</span>`;
+				} else if (quantidadeProduto <= 0) {
+					statusProduto = `<span class="badge bg-warning text-dark ms-2">Sem estoque</span>`;
+				}
+
+				let temp = cardapio.template.produto
+					.replace(/\${id}/g, e.idproduto)
+					.replace(/\${imagem}/g, imagem)
+					.replace(/\${nome}/g, e.nome)
+					.replace(/\${descricao}/g, e.descricao || '')
+					.replace(/\${preco}/g, parseFloat(e.valor).toFixed(2).replace('.', ','))
+					.replace(/\${quantidade}/g, quantidadeProduto)
+					.replace(/\${status}/g, statusProduto)
+					.replace(/\${idcategoria}/g, idcategoria)
+					.replace(/\${btnEditar}/g, btnEditar)
+					.replace(/\${btnRemover}/g, btnRemover)
 					.replace(/\${opcionais}/g, badgeOpcionais);
 
 				$('#listaProdutos-' + idcategoria).append(temp);
@@ -390,6 +433,8 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 			// altera os campos da modal
 			$('#ddlIconeCategoria').val(categoria[0].icone);
 			$('#txtNomeCategoria').val(categoria[0].nome);
+			$('#chkCategoriaAtiva').prop('checked', Number(categoria[0].ativo) === 1);
+			cardapio.method.atualizarTextoStatusCategoria();			
 
 			// abre a modal
 			$('#modalCategoria').modal({
@@ -466,16 +511,19 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 	// método para abrir a modal para adicionar nova categoria
 	abrirModalAdicionarCategoria: () => {
 		CATEGORIA_ID = 0;
-
+		
 		// limpa os campos
 		$('#ddlIconeCategoria').val('-1');
 		$('#txtNomeCategoria').val('');
-
+		$('#chkCategoriaAtiva').prop('checked', true);
+		
 		// abre a modal
 		$('#modalCategoria').modal({
 			backdrop: 'static',
 		});
 		$('#modalCategoria').modal('show');
+
+		cardapio.method.atualizarTextoStatusCategoria();
 	},
 	
 	// abre a modal para duplicar categoria
@@ -540,7 +588,10 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 		// limpa os campos
 		$('#txtNomeProduto').val('');
 		$('#txtPrecoProduto').val('');
+		$('#txtQuantidadeProduto').val(0);
 		$('#txtDescricaoProduto').val('');
+		$('#chkProdutoAtivo').prop('checked', true);
+		cardapio.method.atualizarTextoStatusProduto();
 
 		// abre modal
 		$('#modalProduto').modal({backdrop: 'static',});
@@ -577,8 +628,11 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 		if (produto.length > 0) {
 			// limpa os campos
 			$('#txtNomeProduto').val(produto[0].nome);
-			$('#txtPrecoProduto').val(produto[0].valor.toFixed(2).toString().replace('.', ','));
+			$('#txtPrecoProduto').val(parseFloat(produto[0].valor).toFixed(2).replace('.', ','));
+			$('#txtQuantidadeProduto').val(produto[0].quantidade ?? 0);
 			$('#txtDescricaoProduto').val(produto[0].descricao);
+			$('#chkProdutoAtivo').prop('checked', Number(produto[0].ativo === 1));
+			cardapio.method.atualizarTextoStatusProduto();
 
 			// abre a modal
 			$('#modalProduto').modal({backdrop: 'static'});
@@ -588,10 +642,11 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 
 	// método para confirmar o cadastro / edição do produto;
 	salvarProduto: () => {
-		// validar os campos
 		let nome = $('#txtNomeProduto').val().trim();
 		let valor = parseFloat($('#txtPrecoProduto').val().replace(/\./g, '').replace(',', '.'));
+		let quantidade = parseInt($('#txtQuantidadeProduto').val());
 		let descricao = $('#txtDescricaoProduto').val().trim();
+		let ativo = $('#chkProdutoAtivo').prop('checked') ? 1 : 0;
 
 		if (nome.length <= 0) {
 			app.method.mensagem('Informe o nome do produto, por favor.');
@@ -603,11 +658,18 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 			return;
 		}
 
+		if (isNaN(quantidade) || quantidade < 0) {
+			app.method.mensagem('Informe uma quantidade válida.');
+			return;
+		}
+
 		let dados = {
 			idcategoria: CATEGORIA_ID,
 			idproduto: PRODUTO_ID,
 			nome: nome,
 			valor: valor,
+			quantidade: quantidade,
+			ativo: ativo,
 			descricao: descricao,
 		};
 
@@ -615,17 +677,15 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 
 		app.method.post('/produto', JSON.stringify(dados),
 			(response) => {
-				console.log('response',response,);
 				app.method.loading(false);
-
-				$('#modalProduto').modal('hide',);
+				$('#modalProduto').modal('hide');
 
 				if (response.status === 'error') {
 					app.method.mensagem(response.message);
 					return;
 				}
 
-				app.method.mensagem(response.message,'green');
+				app.method.mensagem(response.message, 'green');
 				cardapio.method.obterProdutosCategoria(CATEGORIA_ID, true);
 			},
 			(error) => {
@@ -907,7 +967,7 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
           let valor = '';
 
           if(element.valoropcional > 0) {
-            valor = `+ R$ ${(element.valoropcional).toFixed(2).replace('.', ',')}`
+            valor = `+ R$ ${parseFloat(element.valoropcional).toFixed(2).replace('.', ',')}`
           }
   
           itens += cardapio.template.opcionalItem.replace(/\${idopcionalitem}/g, element.idopcionalitem)
@@ -941,7 +1001,7 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 				let valor = '';
 
 				if(e.valoropcional > 0) {
-					valor = `+ RS ${(e.valoropcional).toFixed(2).replace('.', ',')}`;
+					valor = `+ RS ${parseFloat(e.valoropcional).toFixed(2).replace('.', ',')}`;
 				}
 				
 				let temp = cardapio.template.opcionalItemSimples.replace(/\${idopcionalitem}/g, e.idopcionalitem)
@@ -1251,21 +1311,22 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 
 cardapio.template = {
 	categoria: `
-		<div class="card mt-3" data-idcategoria="\${id}">
+		<div class="card mt-3 \${classeInativa}" data-idcategoria="\${id}">
 			<div class="card-drag" id="heading-\${id}">
 				<div class="drag-icon">
 					<i class="fas fa-ellipsis-v"></i>
 					<i class="fas fa-ellipsis-v"></i>
 				</div>
 				<div class="infos">
-					<a href="#!" class="name mb-0" data-bs-toggle="collapse" data-bs-target="#collapse-\${id}" aria-expanded="true" aria-controls="collapse-\${id}" onclick="cardapio.method.obterProdutosCategoria('\${id}')" >
+					<a href="#!" class="name mb-0" data-bs-toggle="collapse" data-bs-target="#collapse-\${id}" aria-expanded="true" aria-controls="collapse-\${id}" onclick="cardapio.method.obterProdutosCategoria('\${id}')">
 						<span class="me-2">\${icone}</span>
-							<b>\${titulo}</b>
+						<b>\${titulo}</b>
+						\${badgeStatus}
 					</a>
 				</div>
 
 				<div class="actions">
-					<a href="#!" class="icon-action" data-toggle="tooltip" data-placement="top" title="Editar" onclick="cardapio.method.editarCategoria('\${id}')" >
+					<a href="#!" class="icon-action" data-toggle="tooltip" data-placement="top" title="Editar" onclick="cardapio.method.editarCategoria('\${id}')">
 						<i class="fas fa-pencil-alt"></i>
 					</a>
 					<a href="#!" class="icon-action" data-toggle="tooltip" data-placement="top" title="Duplicar" onclick="cardapio.method.abrirModalDuplicarCategoria('\${id}')">
@@ -1276,12 +1337,11 @@ cardapio.template = {
 					</a>
 				</div>
 			</div>
-			
+
 			<div id="collapse-\${id}" class="collapse" data-parent="#categoriasMenu">
 				<div class="card-body">
 					<p class="title-produtos mb-0"><b>Produtos</b></p>
-					<div id="listaProdutos-\${id}" class="lista-produtos">
-					</div>
+					<div id="listaProdutos-\${id}" class="lista-produtos"></div>
 
 					<div class="card card-select mt-3" onclick="cardapio.method.abrirModalAdicionarProduto('\${id}')">
 						<div class="infos-produto-opcional">
@@ -1311,9 +1371,10 @@ cardapio.template = {
 					</a>
 				</div>
 				<div class="infos-produto">
-					<p class="name"><b>\${nome}</b></p>
+					<p class="name"><b>\${nome}</b> \${status}</p>
 					<p class="description">\${descricao}</p>
 					<p class="price"><b>R$ \${preco}</b></p>
+					<p class="description"><b>Quantidade: </b> \${quantidade}</p>
 				</div>
 				<div class="actions">
 					<a href="#!" class="icon-action" data-toggle="tooltip" data-placement="top" title="Opcionais" onclick="cardapio.method.abrirModalOpcionaisProduto('\${idcategoria}', '\${id}')">

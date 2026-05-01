@@ -57,7 +57,7 @@ pedido.method = {
           let horarioFormatado = datacadastro[1].split(':')[0] + ':' + datacadastro[1].split(':')[1];
 
           let temp = pedido.template.dadospedido.replace(/\${data}/g, `${dataFormatada} às ${horarioFormatado}`)
-            .replace(/\${valor}/g, `R$ ${(response.data.total).toFixed(2).replace('.' , ',')}`);
+            .replace(/\${valor}/g, `R$ ${parseFloat(response.data.total).toFixed(2).replace('.' , ',')}`);
 
           document.querySelector('#containerAcompanhamento').innerHTML += temp;
 
@@ -105,18 +105,37 @@ pedido.method = {
     }
   },
 
-  mensagemWhatsApp: () => {
+    mensagemWhatsApp: () => {
+      let idpedido = ORDER.order;
 
-    var idpedido = ORDER.order.toString().substr(13, ORDER.order.length);
+      if (!idpedido) {
+        app.method.mensagem('Pedido não encontrado.');
+        return;
+      }
 
-    var texto = 'Olá! gostaria de saber sobre o meu pedido: Nº ' + idpedido;
+      app.method.get(`/pedido/${idpedido}`,
+        (response) => {
+          if (response.status === 'error') {
+            app.method.mensagem(response.message);
+            return;
+          }
 
-    let encode = encodeURI(texto);
-    let URL = `https://wa.me/5594981064520?text=${encode}`;
+          let pedido = response.data;
 
-    window.location.href = URL;
+          let texto = `Olá! Gostaria de saber sobre o meu pedido:
+            📦 Pedido: ${idpedido}
+            👤 Cliente: ${pedido.nomecliente || ''}
+            💰 Total: R$ ${pedido.total || ''}
+          `;
 
-  },
+          let url = `https://wa.me/5594981064520?text=${encodeURIComponent(texto)}`;
+          window.open(url, '_blank');
+        },
+        (error) => {
+          console.log('error', error);
+        }
+      );
+    },
 
   carregarEtapas: (data) => {
 
@@ -287,11 +306,12 @@ pedido.method = {
 
     // valida se tem taxa
     if (data.taxaentrega > 0) {
-      let temptaxa = pedido.template.taxaentrega.replace(/\${total}/g, `+ R$ ${(data.taxaentrega).toFixed(2).replace('.', ',')}`)
+      let valorTaxa = data.taxaentrega ? parseFloat(data.taxaentrega) : 0;
+      let temptaxa = pedido.template.taxaentrega.replace(/\${total}/g, `+ R$ ${valorTaxa.toFixed(2).replace('.', ',')}`)
       document.querySelector('#itensPedido').innerHTML += temptaxa;
     }
 
-    let temptotal = pedido.template.total.replace(/\${total}/g, `R$ ${(data.total).toFixed(2).replace('.', ',')}`)
+    let temptotal = pedido.template.total.replace(/\${total}/g, `R$ ${parseFloat(data.total).toFixed(2).replace('.', ',')}`)
     document.querySelector('#itensPedido').innerHTML += temptotal;
 
   },
@@ -376,7 +396,7 @@ pedido.template = {
       <div class="detalhes-produto">
         <div class="infos-produto">
           <p class="name mb-0"><i class="fas fa-motorcycle">&nbsp;</i><b>Taxa de entrega</b></p>
-          <p class="price mb-0"><b>+ R$ \${total}</b></p>
+          <p class="price mb-0"><b>\${total}</b></p>
         </div>
       </div>
     </div>
@@ -388,7 +408,7 @@ pedido.template = {
       <div class="detalhes-produto">
         <div class="infos-produto">
           <p class="name-total mb-0"><b>Total</b></p>
-          <p class="price-total mb-0"><b>R$ \${total}</b></p>
+          <p class="price-total mb-0"><b>\${total}</b></p>
         </div>
       </div>
     </div>

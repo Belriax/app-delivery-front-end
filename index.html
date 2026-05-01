@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pizza Food</title>
+
+  
+  <title>Menu Creator</title>
+  <link rel="icon" href="./img/logo.ico" type="x-icon">
 
   <link rel="stylesheet" href="./css/bootstrap.min.css">
   <link rel="stylesheet" href="./css/fontawesome.css">
@@ -22,16 +25,19 @@
   <header class="width-fix mt-5">
     <div class="card">
       <div class="d-flex">
-        <figure class="container-img" id="imgLogoEmpresa">
-          
-        </figure>
+        <figure class="container-img" id="imgLogoEmpresa"></figure>
 
         <div class="infos">
           <h1><b id="lblNomeEmpresa"></b></h1>
           <div class="infos-sub">
-            <p class="status-open hidden">
-              <i class="fa fa-clock"></i><span id="lblLojaAberta"></span>
-            </p>
+            <div class="status-open hidden" id="boxStatusLoja">
+              <div class="status-linha-1">
+                <i class="fa fa-clock"></i>
+                <span id="lblLojaAberta"></span>
+              </div>
+              <small id="lblStatusComplemento" class="status-complemento"></small>
+            </div>
+
             <a href="./sobre.html" class="link">
               ver mais
             </a>
@@ -40,11 +46,25 @@
       </div>
     </div>
   </header>
-
-  <section class="categoria width-fix mt-4">
-    <div class="container-menu" id="listaCategorias"></div>
+  <section class="width-fix mt-3 mb-3">
+    <div class="search-box">    
+      <i class="fas fa-search search-icon"></i>
+      <input
+        type="text"
+        id="inputBuscaProduto"
+        class="form-control search-input"
+        placeholder="Buscar pizza, hambúrguer, refrigerante..."
+      />
+    </div>
   </section>
 
+  <section class="categoria">
+    <div class="width-fix">
+      <div class="container-menu" id="listaCategorias"></div>
+    </div>
+  </section>
+
+  <section class="lista width-fix mt-0 pb-2" id="secaoDestaques"></section>
   <section class="lista width-fix mt-0 pb-5" id="listaItensCardapio"></section>
 
   <section class="menu-bottom" id="menu-bottom">
@@ -62,14 +82,17 @@
   </section>
 
   <section class="menu-bottom disabled hidden" id="menu-bottom-closed">
-    <p class="mb-0"><b>Loja fechada no momento</b></p>
+    <div>
+      <p class="mb-0"><b>Loja fechada no momento</b></p>
+      <small id="lblMenuFechadoInfo">Confira nosso horário de atendimento</small>
+    </div>
   </section>
 
   
   <script type="text/javascript" src="./js/app.js"></script>
   <script type="text/javascript" src="./js/cardapio.js"></script>
   <script type="text/javascript" src="./js/bootstrap.bundle.min.js"></script>
-  <script type="text/javascript" src="./painel//js//icones-categoria.js"></script>
+  <script type="text/javascript" src="./painel/js/icones-categoria.js"></script>
 
 </body>
 </html>

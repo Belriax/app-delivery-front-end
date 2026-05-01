@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-<title>Painel - Pizza Food</title>
+<title>Painel - Menu Creator</title>
+<link rel="icon" href="../img/logo.ico" type="x-icon">
 
 <link rel="stylesheet" href="../css/bootstrap.min.css">
 <link rel="stylesheet" href="../css/fontawesome.css">
@@ -128,6 +129,24 @@
               <input id="txtNomeCategoria" type="text" class="form-control" />
             </div>
           </div>
+
+          <div class="col-12">
+            <div class="form-group mt-3">
+              <div class="status-switch-card">
+                <div>
+                  <p class="title-categoria mb-0"><b>Status da categoria</b></p>
+                  <small class="text-muted">Desative quando não quiser exibir esta categoria no cardápio.</small>
+                </div>
+
+                <label class="switch-status">
+                  <input type="checkbox" id="chkCategoriaAtiva" checked onchange="cardapio.method.atualizarTextoStatusCategoria()">
+                  <span class="slider-status"></span>
+                </label>
+              </div>
+
+              <span id="txtStatusCategoria" class="status-label ativo">Categoria ativa</span>
+            </div>
+          </div>
         </div>
 
         <div class="footer-btn">
@@ -195,6 +214,31 @@
               <div class="form-group">
                 <p class="title-categoria mb-0 mt-4"><b>Preço (R$):</b></p>
                 <input id="txtPrecoProduto" type="text" class="form-control money" />
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="form-group">
+                <p class="title-categoria mb-0 mt-4"><b>Quantidade:</b></p>
+                <input id="txtQuantidadeProduto" type="number" min="0" class="form-control" value="0" />
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="form-group mt-3">
+                <div class="status-switch-card">
+                  <div>
+                    <p class="title-categoria mb-0"><b>Status do produto</b></p>
+                    <small class="text-muted">Desative quando o produto não puder mais ser vendido.</small>
+                  </div>
+
+                  <label class="switch-status">
+                    <input type="checkbox" id="chkProdutoAtivo" checked onchange="cardapio.method.atualizarTextoStatusProduto()">
+                    <span class="slider-status"></span>
+                  </label>
+                </div>
+
+                <span id="txtStatusProduto" class="status-label ativo">Produto ativo</span>
               </div>
             </div>
 
@@ -578,8 +622,9 @@
 <script type="text/javascript" src="../js/jquery.min.js"></script>
 <script type="text/javascript" src="../js/jquery-ui.js"></script>
 <script type="text/javascript" src="../js/jquery.mask.js"></script>
-<script type="text/javascript" src="../js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="../js/app.js"></script>
+<script type="text/javascript" src="./js/notificacao.js"></script>
+<script type="text/javascript" src="../js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="./js/icones-categoria.js"></script>
 <script type="text/javascript" src="./js/cardapio.js"></script>
 

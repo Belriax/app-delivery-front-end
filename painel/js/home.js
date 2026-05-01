@@ -67,7 +67,7 @@ home.method = {
       2
     );
 
-    var TITULOS = ["Pix (%)", "Dinheiro (%)", "Crédito (%)", "Débito (%)"];
+    var TITULOS = ["Pix", "Dinheiro", "Crédito", "Débito"];
     var VALORES = [pix, dinheiro, credito, debito];
 
     const ctx = document
@@ -81,14 +81,21 @@ home.method = {
         datasets: [
           {
             data: VALORES,
-            backgroundColor: ["#be2d32", "#faab19", "#f7a077", "#fff2cc"],
+            backgroundColor: ["#f58637", "#ffda6f", "#fadcbf", "#ececec"],
           },
         ],
       },
       options: {
         responsive: true,
         legend: {
-          display: false,
+          display: true,
+          position: 'right',
+          labels: {
+            usePointStyle: true,
+            padding: 20,
+            boxWidth: 9,
+            fontSizer: 12,
+          }
         },
         title: {
           display: false,
@@ -135,7 +142,7 @@ home.method = {
       (lista[0].retirada * 100) / lista[0].total
     ).toFixed(2);
 
-    var TITULOS = ["Delivery (%)", "Retirada (%)"];
+    var TITULOS = ["Delivery", "Retirada"];
     var VALORES = [delivery, retirada];
 
     const ctx = document.getElementById("graficoTiposEntrega").getContext("2d");
@@ -147,14 +154,21 @@ home.method = {
         datasets: [
           {
             data: VALORES,
-            backgroundColor: ["#faab19", "#fff2cc"],
+            backgroundColor: ["#f58637", "#ffda6f"],
           },
         ],
       },
       options: {
         responsive: true,
         legend: {
-          display: false,
+          display: true,
+          position: 'right',
+          labels: {
+            usePointStyle: true,
+            padding: 20,
+            boxWidth: 9,
+            fontSizer: 12,
+          }
         },
         title: {
           display: false,
@@ -199,7 +213,7 @@ home.method = {
       });
 
       $("#lblTotalFaturamento").text(
-        `R$ ${totalFaturado.toFixed(2).replace(".", ",")}`
+        `R$ ${parseFloat(totalFaturado).toFixed(2).replace(".", ",")}`
       );
       $("#lblTotalPedidos").text(totalPedido);
     } else {
@@ -303,15 +317,15 @@ home.method = {
           {
             label: "Total de pedidos",
             data: VALORES_PEDIDOS,
-            borderColor: "#be2d32",
-            backgroundColor: "rgb(190 45 50 / 10%)",
+            borderColor: "#e74c3c",
+            backgroundColor: "rgb(133 42 0 / 10%)",
             type: "line",
             order: 1,
           },
           {
             label: "Porcentagem (%)",
             data: VALORES_PORCENTO,
-            backgroundColor: "#faab19",
+            backgroundColor: "#f58637",
             order: 0,
           },
         ],

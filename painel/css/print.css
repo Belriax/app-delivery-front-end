@@ -1,0 +1,326 @@
+/* ========================================
+   ESTILOS PARA IMPRESSÃO 58MM - VERSÃO FINAL
+   ======================================== */
+
+#content-print {
+  position: relative;
+}
+
+#content-print.print {
+  width: 200px !important;
+  max-width: 200px !important;
+  /* font-family: 'Courier New', monospace !important; */
+  font-size: 9px !important;
+  line-height: 1.5 !important;
+  color: #000 !important;
+  background: #fff !important;
+  padding: 2px !important;
+  box-sizing: border-box !important;
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  overflow: hidden !important;
+  font-weight: 600 !important;
+}
+
+/* Cabeçalho */
+#content-print.print .cabecalho-impressao {
+  text-align: center;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: none !important;
+  width: 100%;
+}
+
+#content-print.print .cabecalho-impressao .logo-impressao {
+  width: 40px !important;
+  height: auto !important;
+  margin: 0 auto 3px auto !important;
+  display: block !important;
+}
+
+#content-print.print .cabecalho-impressao h2 {
+  font-size: 11px !important;
+  margin: 0 0 2px 0 !important;
+  font-weight: bold !important;
+  text-transform: uppercase;
+  color: #000 !important;
+}
+
+#content-print.print .cabecalho-impressao p {
+  font-size: 8px !important;
+  margin: 1px 0 !important;
+  line-height: 1.2 !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+  word-wrap: break-word;
+}
+
+#content-print.print .cabecalho-impressao .titulo-pedido {
+  font-size: 9px !important;
+  font-weight: bold !important;
+  margin-top: 3px !important;
+}
+
+/* Cards de informação */
+#content-print.print .container-dados-pedido {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#content-print.print .row {
+  margin: 0 !important;
+}
+
+#content-print.print .col-12 {
+  padding: 0 !important;
+}
+
+#content-print.print .card-address {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 0 4px 0 !important;
+  display: block !important;
+}
+
+#content-print.print .card-address::after {
+  content: '';
+  display: block;
+  border-bottom: 1px dashed #000;
+  margin: 4px 0;
+}
+
+#content-print.print .img-icon-details,
+#content-print.print .icon-edit {
+  display: none !important;
+}
+
+#content-print.print .infos {
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+#content-print.print .name,
+#content-print.print .text,
+#content-print.print .info-pedido {
+  font-size: 8px !important;
+  margin: 1px 0 !important;
+  display: block !important;
+  word-wrap: break-word !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+}
+
+#content-print.print .name b {
+  font-weight: bold !important;
+  font-size: 9px !important;
+}
+
+#content-print.print .d-flex {
+  display: block !important;
+}
+
+/* Container de itens */
+#content-print.print .container-itens-pedido {
+  padding: 0 !important;
+  background: transparent !important;
+  margin-top: 5px !important;
+}
+
+#content-print.print #itensPedido {
+  margin: 0 !important;
+}
+
+#content-print.print #itensPedido::before {
+  content: 'ITENS DO PEDIDO';
+  display: block;
+  text-align: center;
+  font-weight: bold;
+  font-size: 9px;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #000;
+}
+
+/* Itens do pedido */
+#content-print.print .container-item-carrinho,
+#content-print.print .card-item {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 0 3px 0 !important;
+}
+
+#content-print.print .img-produto {
+  display: none !important;
+}
+
+#content-print.print .container-detalhes {
+  display: block !important;
+}
+
+#content-print.print .detalhes-produto {
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+#content-print.print .detalhes-produto-edit {
+  display: none !important;
+}
+
+#content-print.print .info-item,
+#content-print.print .infos-produto {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  gap: 5px !important;
+  align-items: start !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+/* Nome do produto/item */
+#content-print.print .info-item .title,
+#content-print.print .infos-produto .name,
+#content-print.print .name-opcional {
+  font-size: 8px !important;
+  font-weight: bold !important;
+  margin: 0 !important;
+  color: #000 !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  text-align: left !important;
+  grid-column: 1 !important;
+}
+
+/* Preço do produto/item */
+#content-print.print .info-item .price,
+#content-print.print .infos-produto .price,
+#content-print.print .price-opcional {
+  font-size: 8px !important;
+  font-weight: bold !important;
+  margin: 0 !important;
+  color: #000 !important;
+  white-space: nowrap !important;
+  text-align: right !important;
+  grid-column: 2 !important;
+  min-width: 45px !important;
+}
+
+/* Observações */
+#content-print.print .obs,
+#content-print.print .obs-opcional {
+  font-size: 7px !important;
+  font-style: italic !important;
+  margin: 1px 0 3px 0 !important;
+  padding-left: 5px !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+  word-wrap: break-word !important;
+  grid-column: 1 / -1 !important;
+}
+
+/* Totais */
+#content-print.print .resumo-valores {
+  margin: 5px 0 0 0 !important;
+  padding: 5px 0 0 0 !important;
+  border-top: 1px dashed #000 !important;
+}
+
+/* Cada linha de total usa grid também */
+#content-print.print .card-item .infos-produto {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  gap: 5px !important;
+}
+
+#content-print.print .name-total {
+  font-size: 10px !important;
+  font-weight: bold !important;
+  color: #000 !important;
+  text-align: left !important;
+  grid-column: 1 !important;
+}
+
+#content-print.print .price-total {
+  font-size: 10px !important;
+  font-weight: bold !important;
+  color: #000 !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+  grid-column: 2 !important;
+  min-width: 45px !important;
+}
+
+/* Rodapé */
+#content-print.print .rodape-impressao {
+  text-align: center;
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px dashed #000;
+}
+
+#content-print.print .rodape-impressao p {
+  font-size: 8px !important;
+  margin: 1rem 0 !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+}
+
+/* Esconde botões */
+#content-print.print .footer-btn,
+#content-print.print #container-action-footer {
+  display: none !important;
+}
+
+/* Ajustes gerais */
+#content-print.print * {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  box-sizing: border-box !important;
+}
+
+#content-print.print button,
+#content-print.print a.btn {
+  display: none !important;
+}
+
+#content-print.print .mt-2,
+#content-print.print .mt-3,
+#content-print.print .mt-4,
+#content-print.print .mt-5,
+#content-print.print .mb-2,
+#content-print.print .mb-3,
+#content-print.print .mb-4,
+#content-print.print .mb-5,
+#content-print.print .mb-0,
+#content-print.print .pt-1,
+#content-print.print .pb-1 {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#content-print.print .hidden {
+  display: none !important;
+}
+
+#content-print.print,
+#content-print.print * {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+#content-print.print {
+  filter: contrast(1.15) brightness(1);
+}
+
+#content-print.print .card,
+#content-print.print .container-itens-pedido,
+#content-print.print #itensPedido,
+#content-print.print hr {
+  border-top: none !important;
+  border-bottom: none !important;
+}
