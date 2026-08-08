@@ -1,5 +1,8 @@
 
  var pedido = {};
+ pedido.state = {
+  viewAtual: 'lista'
+ };
 
  var DADOS_EMPRESA = {};
 
@@ -12,11 +15,22 @@
     app.method.validaToken();
     app.method.carregarDadosEmpresa();
 
-    pedido.method.openTab('pendentes', 1);
+    // Recupera a view preferida salva no navegador
+    let savedView = localStorage.getItem('pedidosViewPrefs') || 'lista';
+    pedido.state.viewAtual = savedView;
+    
+    // Chama o toggleView para já carregar a interface correta
+    // OBS: o toggleView já se encarrega de acionar atualizarLista() (que aciona openTab)
+    // ou carregarKanban().
+    pedido.method.toggleView(savedView);
 
     setInterval(() => {
-      pedido.method.atualizarLista();
-    }, 10000);
+      if (pedido.state.viewAtual === 'lista') {
+        pedido.method.atualizarLista();
+      } else {
+        pedido.method.carregarKanban();
+      }
+    }, 5000);
 
   }
  }
@@ -129,7 +143,7 @@
         }else if(e.idformapagamento == 2) {
           formapagamentoicon = 'fas fa-coins';
           formapagamento = 'Dinheiro';
-          formapagamentodesc = e.troco != null ? `Troco para ${(e.troco).toFixed(2).replace('.', ',')} reais` : 'Pagamento na entrega do pedido';
+          formapagamentodesc = e.troco != null ? `Troco para ${(e.troco).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} reais` : 'Pagamento na entrega do pedido';
         }else if(e.idformapagamento ==3) {
           formapagamentoicon = 'fas fa-credit-card';
           formapagamento = 'Cartão de Crédito';
@@ -157,7 +171,7 @@
           .replace(/\${formapagamento}/g, formapagamento)
           .replace(/\${formapagamentodesc}/g, formapagamentodesc)
           .replace(/\${datahora}/g, datahora)
-          .replace(/\${total}/g, parseFloat(e.total).toFixed(2).replace('.', ','));
+          .replace(/\${total}/g, parseFloat(e.total).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
   
         // adiciona o pedido na tela
         document.querySelector("#lista-pedidos").innerHTML += temp;
@@ -247,7 +261,7 @@
     }
     else if (data.idformapagamento == 2) {
         document.querySelector('#lblFormaPagamentoIcon').innerHTML = '<i class="fas fa-coins"></i>';
-        document.querySelector('#lblFormaPagamentoDescricao').innerHTML = data.troco != null ? `Troco para ${(data.troco).toFixed(2).replace('.', ',')} reais` : 'Pagamento na entrega do pedido';
+        document.querySelector('#lblFormaPagamentoDescricao').innerHTML = data.troco != null ? `Troco para ${(data.troco).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} reais` : 'Pagamento na entrega do pedido';
     }
     else {
         document.querySelector('#lblFormaPagamentoIcon').innerHTML = '<i class="fas fa-credit-card"></i>';
@@ -319,13 +333,21 @@
 
       var obj = itens_pedido[key];
   
+      let nomeItem = obj[0].nome;
+      let valorItem = obj[0].valor;
+
+      if (obj[0].idvariacao != null) {
+        nomeItem += ` (${obj[0].nomevariacao})`;
+        valorItem = obj[0].valorvariacao;
+      }
+
       // cria o objeto principal do item
       var _item = {
         idpedidoitem: obj[0].idpedidoitem,
-        nome: obj[0].nome,
+        nome: nomeItem,
         observacao: obj[0].observacao,
         quantidade: obj[0].quantidade,
-        valor: obj[0].valor,
+        valor: valorItem,
         opcionais: []
       }
 
@@ -351,18 +373,19 @@
 
     console.log('order', order);
 
-    order.forEach((e, i) => {
-
+    order.forEach((e) => {
       let itens = '';
 
-      if (e.opcionais.length > 0) {
-        // monta a lista de opcionais
+      let quantidadeProduto = parseInt(e.quantidade || 1);
+      let valorProduto = parseFloat(e.valor || 0);
+
+      if (e.opcionais && e.opcionais.length > 0) {
         for (let index = 0; index < e.opcionais.length; index++) {
           let element = e.opcionais[index];
-          
-          itens += pedido.template.opcional.replace(/\${nome}/g, `${e.quantidade}x ${element.nomeopcional}`)
-          .replace(/\${preco}/g, `+ R$ ${(e.quantidade * element.valoropcional).toFixed(2).replace('.', ',')}`)
 
+          itens += pedido.template.opcional
+            .replace(/\${nome}/g, `1x ${element.nomeopcional}`)
+            .replace(/\${preco}/g, `+ R$ ${parseFloat(element.valoropcional || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
         }
       }
 
@@ -372,24 +395,30 @@
         obs = pedido.template.obs.replace(/\${observacao}/g, e.observacao);
       }
 
-      let temp = pedido.template.produto.replace(/\${guid}/g, e.guid)
+      let temp = pedido.template.produto
+        .replace(/\${guid}/g, e.guid)
         .replace(/\${nome}/g, `${e.quantidade}x ${e.nome}`)
-        .replace(/\${preco}/g, `R$ ${(e.quantidade * e.valor).toFixed(2).replace('.', ',')}`)
+        .replace(/\${preco}/g, `R$ ${(parseInt(e.quantidade || 1) * parseFloat(e.valor || 0)).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`)
         .replace(/\${obs}/g, obs)
-        .replace(/\${opcionais}/g, itens)
+        .replace(/\${opcionais}/g, itens);
 
       document.querySelector('#itensPedido').innerHTML += temp;
-
     });
 
     // valida se tem taxa
     if (data.taxaentrega > 0) {
       let valorTaxa = data.taxaentrega ? parseFloat(data.taxaentrega) : 0;
-let temptaxa = pedido.template.taxaentrega.replace(/\${total}/g, `+ R$ ${valorTaxa.toFixed(2).replace('.', ',')}`)
+      let temptaxa = pedido.template.taxaentrega.replace(/\${total}/g, `+ R$ ${valorTaxa.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`)
       document.querySelector('#itensPedido').innerHTML += temptaxa;
     }
 
-    let temptotal = pedido.template.total.replace(/\${total}/g, `R$ ${parseFloat(data.total).toFixed(2).replace('.', ',')}`)
+    if (data.desconto > 0) {
+      let valorDesconto = data.desconto ? parseFloat(data.desconto) : 0;
+      let tempdesconto = pedido.template.desconto.replace(/\${total}/g, `- R$ ${valorDesconto.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`)
+      document.querySelector('#itensPedido').innerHTML += tempdesconto;
+    }
+
+    let temptotal = pedido.template.total.replace(/\${total}/g, `R$ ${parseFloat(data.total).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`)
     document.querySelector('#itensPedido').innerHTML += temptotal;
   },
 
@@ -495,7 +524,8 @@ let temptaxa = pedido.template.taxaentrega.replace(/\${total}/g, `+ R$ ${valorTa
 
   atualizarLista: () => {
     // valida qual é o target, pra carregar os itens da tab atual
-    let tabAtiva = document.querySelector('.tab-content.active').id;
+    let tabAtivaEl = document.querySelector('.tab-content.active');
+    let tabAtiva = tabAtivaEl ? tabAtivaEl.id : 'tab-pendentes';
 
     if (tabAtiva == 'tab-pendentes') {
       pedido.method.openTab('pendentes', 1);
@@ -694,8 +724,11 @@ imprimir: () => {
       scale: 4,
       backgroundColor: '#ffffff',
       logging: false,
-      width: 200,
-      windowWidth: 200,
+      width: 250,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0,
       removeContainer: true,
       useCORS: true,
       allowTaint: true,
@@ -720,14 +753,15 @@ imprimir: () => {
                 size: 58mm auto;
                 margin: 0;
               }
-              body {
+              html, body {
                 margin: 0;
                 padding: 0;
                 text-align: center;
-                background: #f0f0f0;
+                background: #ffffff;
               }
               img {
-                width: 58mm;
+                width: 100%;
+                max-width: 100%;
                 height: auto;
                 display: block;
                 margin: 0 auto;
@@ -757,10 +791,153 @@ imprimir: () => {
       alert('Erro ao gerar a impressão. Tente novamente.');
     });
   }, 200);
+},
+
+toggleView: (view) => {
+  pedido.state.viewAtual = view;
+  
+  // Salva a preferência no localStorage
+  localStorage.setItem('pedidosViewPrefs', view);
+
+  // Atualiza botões
+  document.querySelectorAll('.view-toggle-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(`btn-view-${view}`).classList.add('active');
+
+  // Alterna visibilidade dos containers
+  if (view === 'lista') {
+    document.getElementById('view-lista').classList.remove('hidden');
+    document.getElementById('view-kanban').classList.add('hidden');
+    pedido.method.atualizarLista();
+  } else {
+    document.getElementById('view-lista').classList.add('hidden');
+    document.getElementById('view-kanban').classList.remove('hidden');
+    pedido.method.carregarKanban();
+  }
+},
+
+carregarKanban: () => {
+  app.method.get('/pedido/painel/kanban',
+    (response) => {
+      if(response.status === "error") {
+        app.method.mensagem(response.message);
+        return;
+      }
+      
+      // Limpa as colunas
+      document.querySelector("#kb-lista-1").innerHTML = '';
+      document.querySelector("#kb-lista-2").innerHTML = '';
+      document.querySelector("#kb-lista-3").innerHTML = '';
+      document.querySelector("#kb-lista-4").innerHTML = '';
+
+      // Atualiza os contadores
+      document.querySelector("#kb-count-1").innerText = response.totais.pendente || 0;
+      document.querySelector("#kb-count-2").innerText = response.totais.aceito || 0;
+      document.querySelector("#kb-count-3").innerText = response.totais.preparo || 0;
+      document.querySelector("#kb-count-4").innerText = response.totais.entrega || 0;
+
+      // Popula os cards
+      if(response.data && response.data.length > 0) {
+        response.data.forEach((e) => {
+          let tipoentrega = e.idtipoentrega == 1 ? '<i class="fas fa-motorcycle"></i>' : '<i class="fas fa-box"></i>';
+          
+          let datacadastro = e.datacadastro.split('T');
+          let horarioFormatado = datacadastro[1].split(':')[0] + ':' + datacadastro[1].split(':')[1];
+
+          let temp = pedido.template.cardKanban
+            .replace(/\${idpedido}/g, e.idpedido)
+            .replace(/\${status}/g, e.idpedidostatus)
+            .replace(/\${nome}/g, e.nomecliente)
+            .replace(/\${tipoentrega}/g, tipoentrega)
+            .replace(/\${horario}/g, horarioFormatado)
+            .replace(/\${total}/g, parseFloat(e.total).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+
+          let column = document.querySelector(`#kb-lista-${e.idpedidostatus}`);
+          if (column) {
+            column.innerHTML += temp;
+          }
+        });
+      }
+    },
+    (error) => {
+      console.log('error', error);
+    }
+  );
+},
+
+allowDrop: (ev) => {
+  ev.preventDefault();
+},
+
+drag: (ev) => {
+  ev.dataTransfer.setData("idpedido", ev.target.dataset.idpedido);
+  ev.dataTransfer.setData("statusorigem", ev.target.dataset.status);
+},
+
+drop: (ev, targetStatus) => {
+  ev.preventDefault();
+  let idpedido = ev.dataTransfer.getData("idpedido");
+  let statusOrigem = ev.dataTransfer.getData("statusorigem");
+
+  if (statusOrigem == targetStatus) return;
+
+  // Usa a mesma função moverPara do backend, adaptada
+  var dados = {
+    tab: targetStatus,
+    idpedido: idpedido
+  }
+
+  app.method.loading(true);
+  app.method.post('/pedido/mover', JSON.stringify(dados),
+    (response) => {
+      app.method.loading(false);
+      if (response.status === 'error') {
+          app.method.mensagem(response.message);
+          return;
+      }
+      app.method.mensagem(response.message, 'green');
+      
+      // Move visualmente no Kanban
+      const card = document.querySelector(`#kb-pedido-${idpedido}`);
+      if (card) {
+        card.classList.add('pedido-movendo');
+        setTimeout(() => {
+          card.remove();
+          card.dataset.status = targetStatus;
+          const novaLista = document.querySelector(`#kb-lista-${targetStatus}`);
+          if (novaLista) {
+            novaLista.prepend(card);
+          }
+          card.classList.remove('pedido-movendo');
+          pedido.method.carregarKanban(); // Atualiza contadores
+        }, 200);
+      }
+    },
+    (error) => {
+        console.log('error', error);
+        app.method.loading(false);
+    }
+  );
 }
- }
+
+}
 
  pedido.template = {
+
+  cardKanban: `
+    <div class="card-kanban" id="kb-pedido-\${idpedido}" draggable="true" ondragstart="pedido.method.drag(event)" data-idpedido="\${idpedido}" data-status="\${status}" onclick="pedido.method.abrirModalDetalhes('\${idpedido}')">
+      <div class="card-kanban-header">
+        <span style="font-weight: bold; color: var(--color-primary);">#\${idpedido}</span>
+        <span style="font-size: 12px; color: #888;">\${horario}</span>
+      </div>
+      <div class="card-kanban-body">
+        <p><b><i class="fas fa-user text-muted"></i></b> \${nome}</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+          <span style="color: var(--color-text); font-size: 14px;">\${tipoentrega}</span>
+          <span style="font-weight: 600; font-size: 14px;">R$ \${total}</span>
+        </div>
+      </div>
+    </div>
+  `,
 
   card: `
     <div class="col-3 mb-4">
@@ -817,39 +994,77 @@ imprimir: () => {
   `,
   // <i class="fas fa-pencil-alt"></i>
 
+    produto: `
+    <div class="pedido-detalhe-card mb-3">
+      <div class="pedido-detalhe-produto">
+        <div>
+          <p class="pedido-detalhe-nome mb-1">
+            <b>\${nome}</b>
+          </p>
+          \${opcionais}
+          \${obs}
+        </div>
+
+        <p class="pedido-detalhe-preco mb-0">
+          <b>\${preco}</b>
+        </p>
+      </div>
+    </div>
+  `,
+
   opcional: `
-    <div class="infos-produto">
-      <p class="name-opcional mb-0">\${nome}</p>
-      <p class="price-opcional mb-0">\${preco}</p>
+    <div class="pedido-detalhe-opcional">
+      <span class="pedido-detalhe-opcional-nome">
+        \${nome}
+      </span>
+
+      <span class="pedido-detalhe-opcional-preco">
+        \${preco}
+      </span>
     </div>
   `,
 
   obs: `
-    <div class="infos-produto">
-      <p class="obs-opcional mb-0">- \${observacao}</p>
+    <div class="pedido-detalhe-obs">
+      <i class="fas fa-comment-alt"></i>
+      <span>\${observacao}</span>
     </div>
   `,
 
   taxaentrega: `
-    <div class="card-item mb-2">
-      <div class="detalhes-produto">
-        <div class="infos-produto">
-          <p class="name mb-0"><i class="fas fa-motorcycle">&nbsp;</i><b>Taxa de entrega</b></p>
-          <p class="price mb-0"><b>\${total}</b></p>
-        </div>
+    <div class="pedido-detalhe-card pedido-detalhe-taxa mb-2">
+      <div class="pedido-detalhe-produto">
+        <p class="pedido-detalhe-nome mb-0">
+          <i class="fas fa-motorcycle"></i>&nbsp;
+          <b>Taxa de entrega</b>
+        </p>
+
+        <p class="pedido-detalhe-preco mb-0">
+          <b>\${total}</b>
+        </p>
       </div>
     </div>
-  `
-  ,
+  `,
+
+  desconto: `
+    <div class="pedido-detalhe-card pedido-detalhe-taxa mb-2" style="color: #28a745;">
+      <div class="pedido-detalhe-produto">
+        <p class="pedido-detalhe-nome mb-0">
+          <i class="fas fa-tags"></i>&nbsp;
+          <b>Desconto</b>
+        </p>
+
+        <p class="pedido-detalhe-preco mb-0">
+          <b>\${total}</b>
+        </p>
+      </div>
+    </div>
+  `,
 
   total: `
-    <div class="card-item mb-2">
-      <div class="detalhes-produto">
-        <div class="infos-produto">
-          <p class="name-total mb-0"><b>Total</b></p>
-          <p class="price-total mb-0"><b> \${total}</b></p>
-        </div>
-      </div>
+    <div class="pedido-detalhe-total-card mb-2">
+      <span>Total</span>
+      <b>\${total}</b>
     </div>
   `,
 }

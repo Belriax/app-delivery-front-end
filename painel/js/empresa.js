@@ -6,6 +6,9 @@ var empresa = {};
 
 var MODAL_UPLOAD = new bootstrap.Modal(document.getElementById('modalUpload'));
 
+var MAPA_ENDERECO_EMPRESA = null;
+var MARCADOR_ENDERECO_EMPRESA = null;
+
 var DROP_AREA = document.getElementById("drop-area");
 
 empresa.event = {
@@ -50,6 +53,120 @@ empresa.event = {
 
 empresa.method = {
 
+  buscarEnderecoPorCoordenadas: (lat, lng) => {
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`)
+      .then(response => response.json())
+      .then(data => {
+        if (!data || !data.address) {
+          app.method.mensagem('Não foi possível obter o endereço dessa localização.');
+          return;
+        }
+
+        let endereco = data.address.road || data.address.pedestrian || data.address.residential || '';
+        let bairro = data.address.suburb || data.address.neighbourhood || data.address.city_district || '';
+        let cidade = data.address.city || data.address.town || data.address.village || data.address.municipality || '';
+        let estado = data.address.state || '';
+        let cep = data.address.postcode || '';
+
+        document.getElementById("txtEndereco").value = endereco;
+        document.getElementById("txtBairro").value = bairro;
+        document.getElementById("txtCidade").value = cidade;
+        document.getElementById("txtCEP").value = cep;
+
+        empresa.method.selecionarUfPorNomeEstado(estado);
+      })
+      .catch(error => {
+        console.log('Erro ao buscar endereço por coordenadas:', error);
+        app.method.mensagem('Erro ao buscar endereço pela localização.');
+      });
+  },
+
+  selecionarUfPorNomeEstado: (estado) => {
+    const estados = {
+      'Acre': 'AC',
+      'Alagoas': 'AL',
+      'Amapá': 'AP',
+      'Amazonas': 'AM',
+      'Bahia': 'BA',
+      'Ceará': 'CE',
+      'Distrito Federal': 'DF',
+      'Espírito Santo': 'ES',
+      'Goiás': 'GO',
+      'Maranhão': 'MA',
+      'Mato Grosso': 'MT',
+      'Mato Grosso do Sul': 'MS',
+      'Minas Gerais': 'MG',
+      'Pará': 'PA',
+      'Paraíba': 'PB',
+      'Paraná': 'PR',
+      'Pernambuco': 'PE',
+      'Piauí': 'PI',
+      'Rio de Janeiro': 'RJ',
+      'Rio Grande do Norte': 'RN',
+      'Rio Grande do Sul': 'RS',
+      'Rondônia': 'RO',
+      'Roraima': 'RR',
+      'Santa Catarina': 'SC',
+      'São Paulo': 'SP',
+      'Sergipe': 'SE',
+      'Tocantins': 'TO'
+    };
+
+    if (estados[estado]) {
+      document.getElementById("ddlUf").value = estados[estado];
+    }
+  },
+
+  iniciarMapaEnderecoEmpresa: () => {
+    if (typeof L === 'undefined') {
+      app.method.mensagem('Mapa não carregou.');
+      return;
+    }
+
+    let lat = parseFloat(document.getElementById("txtLatitudeEmpresa").value);
+    let lng = parseFloat(document.getElementById("txtLongitudeEmpresa").value);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      lat = -1.45583;
+      lng = -48.50389;
+    }
+
+    if (MAPA_ENDERECO_EMPRESA == null) {
+      MAPA_ENDERECO_EMPRESA = L.map('mapaEnderecoEmpresa').setView([lat, lng], 16);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(MAPA_ENDERECO_EMPRESA);
+
+      MARCADOR_ENDERECO_EMPRESA = L.marker([lat, lng], {
+        draggable: true
+      }).addTo(MAPA_ENDERECO_EMPRESA);
+
+      MARCADOR_ENDERECO_EMPRESA.on('dragend', function () {
+        let pos = MARCADOR_ENDERECO_EMPRESA.getLatLng();
+
+        document.getElementById("txtLatitudeEmpresa").value = pos.lat;
+        document.getElementById("txtLongitudeEmpresa").value = pos.lng;
+
+        document.getElementById("lblCoordenadasEmpresa").innerText =
+          `Coordenadas: ${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
+
+        empresa.method.buscarEnderecoPorCoordenadas(pos.lat, pos.lng);
+      });
+
+    } else {
+      MAPA_ENDERECO_EMPRESA.setView([lat, lng], 16);
+      MARCADOR_ENDERECO_EMPRESA.setLatLng([lat, lng]);
+    }
+
+    document.getElementById("lblCoordenadasEmpresa").innerText =
+      `Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+    setTimeout(() => {
+      MAPA_ENDERECO_EMPRESA.invalidateSize();
+    }, 300);
+  },
+
   openTab: (tab) => {
     Array.from(document.querySelectorAll(".tab-content")).forEach(e => e.classList.remove('active'));
     Array.from(document.querySelectorAll(".tab-item")).forEach(e => e.classList.add('hidden'));
@@ -64,6 +181,9 @@ empresa.method = {
 
       case 'endereco':
         empresa.method.obterDados();
+        setTimeout(() => {
+          empresa.method.iniciarMapaEnderecoEmpresa();
+        }, 500)
         break;
 
       case 'horario':
@@ -104,6 +224,9 @@ empresa.method = {
 
         document.getElementById("txtNomeEmpresa").value = empresa.nome;
         document.getElementById("txtSobreEmpresa").innerHTML = empresa.sobre.replace(/\n/g, '\r\n');
+        document.getElementById("txtSenhaCozinha").value = ''; // Sempre vazia ao carregar
+        
+        document.getElementById("chkAnunciosAtivos").checked = empresa.anuncios_ativos == 1;
 
 
         // carrega tab endereco
@@ -114,6 +237,14 @@ empresa.method = {
         document.getElementById("txtCidade").value = empresa.cidade;
         document.getElementById("txtComplemento").value = empresa.complemento;
         document.getElementById("ddlUf").value = empresa.estado;
+        document.getElementById("txtLatitudeEmpresa").value = empresa.latitude || '';
+        document.getElementById("txtLongitudeEmpresa").value = empresa.longitude || '';
+
+        setTimeout(() => {
+          if (!document.getElementById('endereco').classList.contains('hidden')) {
+            empresa.method.iniciarMapaEnderecoEmpresa();
+          }
+        }, 300);
         
         const dadosEmpresa = {
           endereco: empresa.endereco || '',
@@ -139,6 +270,7 @@ empresa.method = {
 
     let nome = document.getElementById("txtNomeEmpresa").value.trim();
     let sobre = document.getElementById("txtSobreEmpresa").value.trim();
+    let senhaCozinha = document.getElementById("txtSenhaCozinha").value.trim();
 
     if(nome.length <= 0){
       app.method.mensagem("Informe o nome da empresa, por favor.");
@@ -149,6 +281,7 @@ empresa.method = {
     let dados = {
       nome: nome,
       sobre: sobre,
+      senhaCozinha: senhaCozinha
     }
 
     app.method.loading(true);
@@ -164,6 +297,12 @@ empresa.method = {
           return;
         }
 
+        let anuncios_ativos = document.getElementById("chkAnunciosAtivos").checked ? 1 : 0;
+        app.method.post('/empresa/anuncios', JSON.stringify({ anuncios_ativos: anuncios_ativos }), 
+          (resAnuncio) => {}, 
+          (errAnuncio) => {}
+        );
+
         app.method.mensagem(response.message, 'green');
 
         // atualizar o localStorage
@@ -178,6 +317,20 @@ empresa.method = {
       }
     );
 
+  },
+
+  toggleSenhaCozinha: () => {
+    const txtSenhaCozinha = document.getElementById("txtSenhaCozinha");
+    const icon = document.querySelector("#btnToggleSenhaCozinha i");
+    if (txtSenhaCozinha.type === "password") {
+      txtSenhaCozinha.type = "text";
+      icon.classList.remove("fa-eye");
+      icon.classList.add("fa-eye-slash");
+    } else {
+      txtSenhaCozinha.type = "password";
+      icon.classList.remove("fa-eye-slash");
+      icon.classList.add("fa-eye");
+    }
   },
 
   // adiciona a nova logo da empresa
@@ -346,6 +499,8 @@ empresa.method = {
     let cidade = document.getElementById("txtCidade").value.trim();
     let complemento = document.getElementById("txtComplemento").value.trim();
     let uf = document.getElementById("ddlUf").value.trim();
+    let latitude = document.getElementById("txtLatitudeEmpresa").value.trim();
+    let longitude = document.getElementById("txtLongitudeEmpresa").value.trim();
 
     if(cep.length <= 0){
       app.method.mensagem('Informe o CEP, por favor');
@@ -390,7 +545,9 @@ empresa.method = {
       cidade: cidade,
       estado: uf,
       numero: numero,
-      complemento: complemento
+      complemento: complemento,
+      latitude: latitude,
+      longitude: longitude
     }
 
     app.method.loading(true);

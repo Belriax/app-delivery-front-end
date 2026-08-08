@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", function (event) {
 var item = {};
 var ITEM_ID = {};
 var PRODUTO = {};
+var VARIACOES = [];
+var VARIACAO_SELECIONADA = null;
 var VALIDACAOES = [];
 var OPCIONAIS = [];
 var OPCIONAIS_SELECIONADOS = [];
@@ -23,14 +25,14 @@ item.event = {
     VALIDACAOES = [];
     OPCIONAIS = [];
     OPCIONAIS_SELECIONADOS = [];
+    VARIACOES = [];
+    VARIACAO_SELECIONADA = null;
     QUANTIDADE_SELECIONADA = 1;
     PRODUTO_INDISPONIVEL = false;
 
     if(p != null && p.trim() != '' && !isNaN(p)){
       ITEM_ID = p;
       item.method.obterDadosProduto();
-      item.method.obterOpcionaisProduto();
-
     }else{
       window.location.href = '/index.html';
     }
@@ -76,10 +78,11 @@ item.method = {
 
         document.getElementById('titulo-produto').innerText = produto.nome;
         document.getElementById('descricao-produto').innerText = produto.descricao || '';
-        document.getElementById('preco-produto').innerText = `R$ ${parseFloat(produto.valor).toFixed(2).replace('.', ',')}`;
-        document.getElementById('btn-preco-produto').innerText = `R$ ${parseFloat(produto.valor).toFixed(2).replace('.', ',')}`;
+        document.getElementById('preco-produto').innerText = `R$ ${parseFloat(produto.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('btn-preco-produto').innerText = `R$ ${parseFloat(produto.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
         item.method.validarDisponibilidadeProduto(produto);
+        item.method.obterVariacoesProduto();
         item.method.obterOpcionaisProduto();
       },
       (error) => {
@@ -87,6 +90,57 @@ item.method = {
         console.log('error', error);
       }, true
     );
+  },
+  
+  obterVariacoesProduto: () => {
+    app.method.get('/produto/variacoes/' + ITEM_ID, (response) => {
+      if (response.status === 'success' && response.data && response.data.length > 0) {
+        VARIACOES = response.data;
+        let menorValor = Math.min(...VARIACOES.map(v => parseFloat(v.valor)));
+        document.getElementById('preco-produto').innerHTML = `<span style="font-size: 11px; color: #777; font-weight: normal; display: block; margin-bottom: -2px;">A partir de</span>R$ ${menorValor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('btn-preco-produto').innerText = 'Selecione um tamanho';
+        item.method.carregarVariacoes();
+      }
+    });
+  },
+
+  carregarVariacoes: () => {
+    let container = document.getElementById('listaVariacoes');
+    container.classList.remove('hidden');
+    container.innerHTML = `
+      <div class="container-group mb-5">
+        <span class="badge">Obrigatório</span>
+        <p class="title-categoria mb-0"><b>Opções de Tamanho/Preço</b></p>
+        <span class="sub-title-categoria">Escolha 1 opção</span>
+        <div id="itensVariacoes"></div>
+      </div>
+    `;
+
+    let itensHTML = '';
+    VARIACOES.forEach(v => {
+      let valorFormatado = `R$ ${parseFloat(v.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      itensHTML += `
+        <div class="card card-opcionais mt-2" onclick="item.method.selecionarVariacao('${v.idvariacao}')">
+          <div class="infos-produto-opcional">
+            <p class="name mb-0"><b>${v.nome}</b></p>
+            <p class="price mb-0"><b>${valorFormatado}</b></p>
+          </div>
+          <div class="checks">
+            <label class="container-check">
+              <input id="check-variacao-${v.idvariacao}" type="radio" name="radio-variacao" />
+              <span class="checkmark radio"></span>
+            </label>
+          </div>
+        </div>
+      `;
+    });
+    document.getElementById('itensVariacoes').innerHTML = itensHTML;
+  },
+
+  selecionarVariacao: (idvariacao) => {
+    VARIACAO_SELECIONADA = VARIACOES.find(v => v.idvariacao == idvariacao);
+    document.getElementById('check-variacao-' + idvariacao).checked = true;
+    item.method.atualizarSacola();
   },
   
   obterOpcionaisProduto: () => {
@@ -170,19 +224,38 @@ item.method = {
           }
         }
 
+        let exibicao = opcional[0].exibicao; // 1 = lista, 2 = cards
+        let containerClass = exibicao == 2 ? 'opcionais-cards-grid' : '';
+
         for (let index = 0; index < opcional.length; index++){
           let element = opcional[index];
-
           let valor = '';
 
           if(element.valoropcional > 0) {
-            valor = `+ R$ ${parseFloat(element.valoropcional).toFixed(2).replace('.', ',')}`
+            valor = `+ R$ ${parseFloat(element.valoropcional).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+          }
+
+          let imgHtml = '';
+          if (element.imagem) {
+            imgHtml = exibicao == 2 
+              ? `<div class="card-opcional-img" style="background-image: url('../public/images/${element.imagem}')"></div>`
+              : `<div class="card-opcionais-img" style="background-image: url('../public/images/${element.imagem}')"></div>`;
+          } else {
+            imgHtml = exibicao == 2 
+              ? `<div class="card-opcional-img no-img"><i class="fas fa-camera"></i></div>`
+              : ``; // In list view, if no image, just don't render the image box to save space.
           }
   
-          itens += item.template.opcionalItem.replace(/\${idopcionalitem}/g, element.idopcionalitem)
+          let descHtml = element.descricao ? `<p class="desc">${element.descricao}</p>` : '';
+
+          let templateItem = exibicao == 2 ? item.template.opcionalItemCard : item.template.opcionalItem;
+
+          itens += templateItem.replace(/\${idopcionalitem}/g, element.idopcionalitem)
           .replace(/\${nome}/g, element.nomeopcional)
           .replace(/\${valor}/g, valor)
           .replace(/\${idopcional}/g, e[0])
+          .replace(/\${img}/g, imgHtml)
+          .replace(/\${desc}/g, descHtml);
         }
 
         let temp = item.template.opcional.replace(/\${idopcional}/g, e[0])
@@ -191,6 +264,7 @@ item.method = {
           .replace(/\${sub-titulo}/g, subtitulo)
           .replace(/\${minimo}/g, minimo)
           .replace(/\${maximo}/g, maximo)
+          .replace(/\${containerClass}/g, containerClass)
           .replace(/\${itens}/g, itens)
 
         document.querySelector('#listaOpcionais').innerHTML += temp;        
@@ -203,30 +277,39 @@ item.method = {
     
     let listaSimples = lista.filter((elem) => { return elem.tiposimples == 1 });
     
-    document.querySelector('#listaOpcionaisSimples').innerHTML = '';
+    let containerSimples = document.querySelector('#listaOpcionaisSimples');
+    let boxSimples = document.querySelector('#containerOpcionaisSimples');
+
+    if (containerSimples) containerSimples.innerHTML = '';
     
     if(listaSimples.length > 0) {
-      document.querySelector('#containerOpcionaisSimples').classList.remove('hidden');
+      if (boxSimples) boxSimples.classList.remove('hidden');
 
       listaSimples.forEach((e, i) => {
         
         let valor = '';
 
         if(e.valoropcional > 0) {
-          valor = `+ R$ ${parseFloat(e.valoropcional).toFixed(2).replace('.', ',')}`
+          valor = `+ R$ ${parseFloat(e.valoropcional).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
         }
+
+        let imgHtml = e.imagem 
+            ? `<div class="card-opcionais-img" style="background-image: url('../public/images/${e.imagem}')"></div>`
+            : '';
+        let descHtml = e.descricao ? `<p class="desc">${e.descricao}</p>` : '';
 
         let temp = item.template.opcionalItemSimples.replace(/\${idopcionalitem}/g, e.idopcionalitem)
         .replace(/\${nome}/g, e.nomeopcional)
-        .replace(/\${valor}/g, valor);
+        .replace(/\${valor}/g, valor)
+        .replace(/\${img}/g, imgHtml)
+        .replace(/\${desc}/g, descHtml);
 
-
-      document.querySelector('#listaOpcionaisSimples').innerHTML += temp;
+        if (containerSimples) containerSimples.innerHTML += temp;
 
       });
       
     }else{
-      document.querySelector('#containerOpcionaisSimples').remove();
+      if (boxSimples) boxSimples.classList.add('hidden');
     }
   },
 
@@ -357,7 +440,9 @@ item.method = {
   },
   
   atualizarSacola: () => {
-    let valorTotal = parseFloat(PRODUTO.valor);
+    let basePrice = VARIACAO_SELECIONADA ? parseFloat(VARIACAO_SELECIONADA.valor) : parseFloat(PRODUTO.valor);
+    let valorProduto = basePrice * parseInt(QUANTIDADE_SELECIONADA);
+    let valorOpcionais = 0;
 
     for (let index = 0;  index < OPCIONAIS_SELECIONADOS.length; index ++) {
       const element = OPCIONAIS_SELECIONADOS[index];
@@ -365,14 +450,22 @@ item.method = {
       const valorOpcional = parseFloat(element.valoropcional);
 
       if(valorOpcional > 0) {
-        valorTotal += valorOpcional;
+        valorOpcionais += valorOpcional;
       }
     }
 
-    const quantidade = parseFloat(QUANTIDADE_SELECIONADA);    
-    valorTotal = quantidade * valorTotal;
+    let valorTotal = valorProduto + valorOpcionais;
 
-    document.getElementById('btn-preco-produto').innerText = `R$ ${valorTotal.toFixed(2).replace('.', ',')}`;    
+    document.getElementById('btn-preco-produto').innerText = `R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;    
+
+    // Atualiza estado visual (selected) de todos os cards
+    document.querySelectorAll('[id^="check-opcional-"]').forEach(chk => {
+      let card = chk.closest('.card-opcionais') || chk.closest('.card-opcional-grid');
+      if (card) {
+        if (chk.checked) card.classList.add('selected');
+        else card.classList.remove('selected');
+      }
+    });
   },
   
   adicionarAoCarrinho: () => {
@@ -382,6 +475,11 @@ item.method = {
     }
 
     let observacao = document.querySelector('#txtObservacao').value.trim();
+
+    if (VARIACOES.length > 0 && !VARIACAO_SELECIONADA) {
+      app.method.mensagem("Selecione uma opção de tamanho/preço obrigatória.");
+      return;
+    }
 
     if (VALIDACAOES.length > 0) {
       app.method.mensagem("Selecione os campos obrigatórios.");
@@ -405,13 +503,30 @@ item.method = {
       idproduto: PRODUTO.idproduto,
       nome: PRODUTO.nome,
       imagem: PRODUTO.imagem,
-      valor: PRODUTO.valor,
+      valor: VARIACAO_SELECIONADA ? VARIACAO_SELECIONADA.valor : PRODUTO.valor,
       quantidade: QUANTIDADE_SELECIONADA,
       observacao: observacao,
-      opcionais: OPCIONAIS_SELECIONADOS
+      opcionais: OPCIONAIS_SELECIONADOS,
+      idvariacao: VARIACAO_SELECIONADA ? VARIACAO_SELECIONADA.idvariacao : null,
+      nomevariacao: VARIACAO_SELECIONADA ? VARIACAO_SELECIONADA.nome : null
     });
 
     app.method.gravarValorSessao(JSON.stringify(cart), 'cart');
+
+    // GA4 Event: add_to_cart
+    if (typeof gtag === 'function') {
+      let valorFinal = VARIACAO_SELECIONADA ? VARIACAO_SELECIONADA.valor : PRODUTO.valor;
+      gtag('event', 'add_to_cart', {
+        currency: 'BRL',
+        value: parseFloat(valorFinal) * parseInt(QUANTIDADE_SELECIONADA),
+        items: [{
+          item_id: PRODUTO.idproduto,
+          item_name: PRODUTO.nome,
+          price: parseFloat(valorFinal),
+          quantity: parseInt(QUANTIDADE_SELECIONADA)
+        }]
+      });
+    }
 
     app.method.mensagem('Item adicionado ao carrinho.', 'green');
 
@@ -501,17 +616,38 @@ item.template = {
 
       <p class="title-categoria mb-0"><b>\${titulo}</b></p>
       <span class="sub-title-categoria">\${sub-titulo}</span>
-      \${itens}
+      <div class="\${containerClass}">
+        \${itens}
+      </div>
     </div>
   `,
 
   opcionalItem: `
-    <div class="card card-opcionais mt-2">
+    <div class="card card-opcionais mt-2" onclick="let chk = document.querySelector('#check-opcional-\${idopcionalitem}'); chk.checked = !chk.checked; item.method.selecionarOpcional('\${idopcionalitem}', \${idopcional})">
+      \${img}
       <div class="infos-produto-opcional">
         <p class="name mb-0"><b>\${nome}</b></p>
+        \${desc}
         <p class="price mb-0"><b>\${valor}</b></p>
       </div>
       <div class="checks">
+        <label class="container-check" onclick="event.stopPropagation();">
+          <input id="check-opcional-\${idopcionalitem}" type="checkbox" class="paiopcional-\${idopcional}" onchange="item.method.selecionarOpcional('\${idopcionalitem}', \${idopcional})" />
+          <span class="checkmark"></span>
+        </label>
+      </div>
+    </div>
+  `,
+
+  opcionalItemCard: `
+    <div class="card-opcional-grid" onclick="let chk = document.querySelector('#check-opcional-\${idopcionalitem}'); chk.checked = !chk.checked; item.method.selecionarOpcional('\${idopcionalitem}', \${idopcional})">
+      \${img}
+      <div class="card-opcional-body">
+        <p class="name"><b>\${nome}</b></p>
+        \${desc}
+        <p class="price">\${valor}</p>
+      </div>
+      <div class="checks" onclick="event.stopPropagation();">
         <label class="container-check">
           <input id="check-opcional-\${idopcionalitem}" type="checkbox" class="paiopcional-\${idopcional}" onchange="item.method.selecionarOpcional('\${idopcionalitem}', \${idopcional})" />
           <span class="checkmark"></span>
@@ -521,12 +657,14 @@ item.template = {
   `,
 
   opcionalItemSimples: `
-    <div class="card card-opcionais mt-2">
+    <div class="card card-opcionais mt-2" onclick="let chk = document.querySelector('#check-opcional-\${idopcionalitem}'); chk.checked = !chk.checked; item.method.selecionarOpcionalSimples('\${idopcionalitem}')">
+      \${img}
       <div class="infos-produto-opcional">
         <p class="name mb-0"><b>\${nome}</b></p>
+        \${desc}
         <p class="price mb-0"><b>\${valor}</b></p>
       </div>
-      <div class="checks">
+      <div class="checks" onclick="event.stopPropagation();">
         <label class="container-check">
           <input id="check-opcional-\${idopcionalitem}" type="checkbox" onchange="item.method.selecionarOpcionalSimples('\${idopcionalitem}')" />
           <span class="checkmark"></span>

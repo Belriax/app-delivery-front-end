@@ -3,594 +3,529 @@ document.addEventListener("DOMContentLoaded", function (event) {
 });
 
 var relatorio = {};
+var CHART_INSTANCIA = undefined;
+var TABELA_INSTANCIA = undefined;
+var RELATORIO_ATUAL = null;
 
-var GRAFICO = undefined;
-
+const REPORTS_CONFIG = {
+  vendas_periodo: {
+    id: 'vendas_periodo',
+    titulo: 'Vendas por Período',
+    desc: 'Análise detalhada do faturamento diário em um período específico.',
+    filtros: ['data_inicio', 'data_fim', 'categoria'],
+    grafico: 'line'
+  },
+  vendas_ticket: {
+    id: 'vendas_ticket',
+    titulo: 'Ticket Médio Mensal',
+    desc: 'Evolução do valor médio gasto por pedido ao longo dos meses.',
+    filtros: ['ano'],
+    grafico: 'bar'
+  },
+  produtos_mais_vendidos: {
+    id: 'produtos_mais_vendidos',
+    titulo: 'Produtos Mais Vendidos (Curva ABC)',
+    desc: 'Ranking dos itens que mais geram receita para o negócio.',
+    filtros: ['data_inicio', 'data_fim'],
+    grafico: 'doughnut'
+  },
+  produtos_inativos: {
+    id: 'produtos_inativos',
+    titulo: 'Produtos Sem Venda',
+    desc: 'Itens do cardápio que não tiveram nenhuma saída no período.',
+    filtros: ['data_inicio', 'data_fim'],
+    grafico: null
+  },
+  pedidos_horario: {
+    id: 'pedidos_horario',
+    titulo: 'Pedidos por Horário',
+    desc: 'Volume de pedidos distribuído pelas horas do dia.',
+    filtros: ['data_inicio', 'data_fim'],
+    grafico: 'bar'
+  },
+  pedidos_status: {
+    id: 'pedidos_status',
+    titulo: 'Pedidos por Status',
+    desc: 'Proporção de pedidos finalizados, cancelados e em andamento.',
+    filtros: ['data_inicio', 'data_fim'],
+    grafico: 'doughnut'
+  }
+};
 
 relatorio.event = {
   init: () => {
     app.method.validaToken();
     app.method.carregarDadosEmpresa();
-
-    relatorio.method.openTab('faturamento');
+    relatorio.method.carregarMenuBase();
     
-    relatorio.method.bloquearDatasFiltrosFaturamento();
-    relatorio.method.bloquearDatasFiltrosHistorico();
+    // Bind search global
+    $("#txtPesquisaRelatorio").on("keyup", function() {
+      let termo = $(this).val().toLowerCase();
+      
+      if(termo.trim() === '') {
+        // Mostrar tudo (recolher accordions)
+        $(".accordion-collapse").removeClass('show');
+        $(".list-group-item").show();
+        $(".accordion-item").show();
+      } else {
+        // Expandir todos os accordions para mostrar resultados
+        $(".accordion-collapse").addClass('show');
+        $(".list-group-item").each(function() {
+          let texto = $(this).text().toLowerCase();
+          let match = texto.includes(termo);
+          $(this).toggle(match);
+          
+          // Se encontrou algum filho, mostrar o pai
+          if(match) {
+            $(this).closest('.accordion-item').show();
+          }
+        });
+        
+        // Esconder accordions que não tem nenhum filho visível
+        $(".accordion-item").each(function() {
+          let visiveis = $(this).find(".list-group-item:visible").length;
+          if(visiveis === 0) {
+            $(this).hide();
+          }
+        });
+      }
+    });
   }
 }
 
+let MENU_DATA = [];
+
 relatorio.method = {
-  openTab: (tab) => {
-    Array.from(document.querySelectorAll(".tab-content")).forEach(e => e.classList.remove('active'));
-    Array.from(document.querySelectorAll(".tab-item")).forEach(e => e.classList.add('hidden'));
-
-    document.querySelector("#tab-" + tab).classList.add('active');
-    document.querySelector("#" + tab).classList.remove('hidden');
-
-    switch (tab) {
-      case 'faturamento':
-        relatorio.method.carregarDataAtualnoFiltroFaturamento();
-        relatorio.method.filtrarFaturamento();
-        break;
-        
-        case 'historico':
-          relatorio.method.carregarDataAtualFiltroHistorico();
-          relatorio.method.filtrarHistorico();
-          break;
-
-      default:
-        break;
-    }
-  },
-
-  bloquearDatasFiltrosFaturamento: () => {
-  const umAnoAtras = new Date();
-  umAnoAtras.setFullYear(umAnoAtras.getFullYear() - 1);
   
-  const hoje = new Date();
-  const ultimoDiaMesAtual = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-
-  const dataInicioFormatada = relatorio.method.formatarDataISO(umAnoAtras);
-  
-  const dataFimFormatada = relatorio.method.formatarDataISO(ultimoDiaMesAtual);
-
-  $("#txtDataInicioFaturamento").attr({
-    'min': dataInicioFormatada,
-    'max': dataFimFormatada
-  });
-
-  $("#txtDataFimFaturamento").attr({
-    'min': dataInicioFormatada,
-    'max': dataFimFormatada
-  });
-},
-
-// Função auxiliar para formatar data no padrão ISO (YYYY-MM-DD)
-formatarDataISO: (data) => {
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, '0');
-  const dia = String(data.getDate()).padStart(2, '0');
-  
-  return `${ano}-${mes}-${dia}`;
-},
-
-  carregarDataAtualnoFiltroFaturamento: () => {   
-    var date = new Date();
-    var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-    var lastDay = new Date();
-
-    let diaIni = firstDay.getDate();
-    let mesIni = firstDay.getMonth() + 1;
-    let anoIni = firstDay.getFullYear();
-    
-    let diaFim = lastDay.getDate();
-    let mesFim = lastDay.getMonth() + 1;
-    let anoFim = lastDay.getFullYear();
-
-    if(diaIni < 10) diaIni = '0' + diaIni;
-    if(mesIni < 10) mesIni = '0' + mesIni;
-
-    if(diaFim < 10) diaFim = '0' + diaFim;
-    if(mesFim < 10) mesFim = '0' + mesFim;
-
-    $("#txtDataInicioFaturamento").val(`${anoIni}-${mesIni}-${diaIni}`);
-    $("#txtDataFimFaturamento").val(`${anoFim}-${mesFim}-${diaFim}`);
-  },
-  
-  filtrarFaturamento: () => {
-    let datainicio = $("#txtDataInicioFaturamento").val();
-    let datafim = $("#txtDataFimFaturamento").val();
-    let categoria = $("#ddlCategoriaFaturamento").val();
-
-    if(!datainicio){
-      app.method.mensagem("Informe uma data de início válida")
-      return;
-    }
-
-    if(!datafim){
-      app.method.mensagem("Infome uma data fim válida");
-      return;
-    }
-
-    if (new Date(datainicio) > new Date(datafim)) {
-      app.method.mensagem("A data de início não pode ser maior que a data fim");
-      return;
-    }
-
-    var dados = {
-      dataini: datainicio,
-      datafim: datafim,
-      categoria: categoria,
-    }
-
+  // =================== MENU, FAVORITOS E RECENTES ===================
+  carregarMenuBase: () => {
     app.method.loading(true);
-
-    app.method.post('/faturamento/filtrar', JSON.stringify(dados),
-
-      (response) => {
-        console.log('response: ', response);
-        app.method.loading(false);
-
-        if(response.status === 'error'){
-          app.method.mensagem(response.message);
-          return;
-        }
-
-        if(response.data){
-          relatorio.method.carregarGrafico(response.data);
-          relatorio.method.atualizarTotais(response.data);
-        } else{
-          relatorio.method.atualizarTotais([]);
-        }       
-
-      },
-      (error) => {
-        console.log("error", error);
-        app.method.loading(false);
-        app.method.mensagem("Erro ao filtrar faturamento");
-        relatorio.method.atualizarTotais([]);
-      }
-    );
     
+    var headers = new Headers();
+    headers.append("Authorization", app.method.obterValorSessao('token'));
+
+    fetch('/relatorio/menu', { method: 'GET', headers: headers })
+    .then(response => response.json())
+    .then(result => {
+      app.method.loading(false);
+      if (result.status === 'error') {
+        app.method.mensagem(result.message);
+        return;
+      }
+      MENU_DATA = result.data.menu;
+      relatorio.method.renderizarMenu(MENU_DATA);
+      relatorio.method.renderizarFavoritos(result.data.favoritos);
+      relatorio.method.renderizarRecentes(result.data.recentes);
+    })
+    .catch(error => {
+      app.method.loading(false);
+      console.log('error', error);
+    });
   },
 
-  carregarGrafico: (lista) => {
+  renderizarMenu: (menuList) => {
+    let html = '';
+    menuList.forEach(modulo => {
+      html += `
+        <div class="accordion-item border-0 bg-transparent mb-2">
+          <h2 class="accordion-header" id="heading${modulo.id}">
+            <button class="accordion-button collapsed py-2 px-3 rounded shadow-sm bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${modulo.id}" style="font-size: 14px; font-weight: 600;">
+              <i class="${modulo.icone} text-${modulo.cor} me-2"></i> ${modulo.titulo} 
+              <span class="badge bg-light text-muted ms-auto rounded-pill">${modulo.relatorios.length}</span>
+            </button>
+          </h2>
+          <div id="collapse${modulo.id}" class="accordion-collapse collapse" data-bs-parent="#accordionCategoriasBI">
+            <div class="accordion-body p-2 pt-3">
+              <div class="list-group list-group-flush">
+      `;
+      modulo.relatorios.forEach(rel => {
+        let config = REPORTS_CONFIG[rel.id];
+        let iconeStr = config ? `<i class="fas fa-chevron-right me-2" style="width: 15px; font-size: 10px;"></i>` : '';
+        html += `<a href="#" class="list-group-item list-group-item-action border-0 py-2 rounded mb-1 text-muted" onclick="relatorio.method.abrirRelatorio('${rel.id}', '${modulo.titulo}')">${iconeStr} ${rel.titulo}</a>`;
+      });
+      html += `</div></div></div></div>`;
+    });
+    $("#accordionCategoriasBI").html(html);
+  },
 
-    $("#lblNenhumFaturamento").addClass('hidden');
-
-    if(GRAFICO != undefined) {
-      GRAFICO.destroy();
-      GRAFICO = undefined;
+  renderizarFavoritos: (favIds) => {
+    let html = '';
+    window.USUARIO_FAVORITOS = favIds; // cache
+    favIds.forEach(id => {
+      let config = REPORTS_CONFIG[id];
+      if (config) {
+        html += `<a href="#" class="list-group-item list-group-item-action border-0 py-2 rounded mb-1 text-muted" onclick="relatorio.method.abrirRelatorio('${id}', 'Favoritos')"><i class="fas fa-star text-warning me-2" style="width: 15px;"></i> ${config.titulo}</a>`;
+      }
+    });
+    if (favIds.length === 0) {
+      html = '<p class="text-muted small px-3">Nenhum favorito salvo.</p>';
     }
+    $("#menu-favoritos").html(html);
+  },
 
-    if(lista.length > 0) {
+  renderizarRecentes: (recIds) => {
+    let html = '';
+    recIds.forEach(id => {
+      let config = REPORTS_CONFIG[id];
+      if (config) {
+        html += `<a href="#" class="list-group-item list-group-item-action border-0 py-2 rounded mb-1 text-muted" onclick="relatorio.method.abrirRelatorio('${id}', 'Recentes')"><i class="fas fa-history text-info me-2" style="width: 15px;"></i> ${config.titulo}</a>`;
+      }
+    });
+    if (recIds.length === 0) {
+      html = '<p class="text-muted small px-3">Nenhum relatório recente.</p>';
+    }
+    $("#menu-recentes").html(html);
+  },
 
-      var LINHAS = [];
-      var VALORES = [];
+  toggleFavorito: () => {
+    if (!RELATORIO_ATUAL) return;
+    let id = RELATORIO_ATUAL.id;
+    
+    var headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("Authorization", app.method.obterValorSessao('token'));
 
-      let datainicio = $("#txtDataInicioFaturamento").val();
-      let datafim = $("#txtDataFimFaturamento").val();
-
-      let data1 = new Date(`${datainicio} 00:00:00`);
-      let data2 = new Date(`${datafim} 23:59:59`);
-
-      let diff_time = data2.getTime() - data1.getTime();
-
-      // calculo da diferença em dias
-      let diff_days = Math.round(diff_time / (1000 * 3600 * 24));
-
-      for (let index = 0; index < diff_days; index++){
-        let data_teste = new Date(data1);
-
-        data_teste.setDate(data_teste.getDate() + index);
-
-        let dia = data_teste.getDate();
-        let mes = data_teste.getMonth() + 1;
-        let ano = data_teste.getFullYear();
-
-        if(dia < 10) dia = '0' + dia;
-        if(mes < 10) mes = '0' + mes;
-
-        let data_final = `${dia}/${mes}/${ano}`;
-
-        // valida se tem registros pra essa data na lista que retornou da API
-        let existe = lista.filter((e) => {
-          let filtro = e.filtro.split('T')[0];
-          let dataFormatada = `${filtro.split('-')[2]}/${filtro.split('-')[1]}/${filtro.split('-')[0]}`;
-          return dataFormatada == data_final;
-        });
-
-        if(existe.length > 0) {
-          LINHAS.push(data_final);
-          VALORES.push(existe[0].total);
-        }else{
-          LINHAS.push(data_final);
-          VALORES.push(0);
+    fetch('/relatorio/favorito', { method: 'POST', headers: headers, body: JSON.stringify({ id: id }) })
+    .then(response => response.json())
+    .then(result => {
+      if (result.status === 'success') {
+        relatorio.method.renderizarFavoritos(result.data);
+        let isFav = result.data.includes(id);
+        if (isFav) {
+          $("#btn-favoritar").removeClass('btn-outline-warning').addClass('btn-warning text-white');
+        } else {
+          $("#btn-favoritar").removeClass('btn-warning text-white').addClass('btn-outline-warning');
         }
       }
+    });
+  },
 
-      const ctx = document.getElementById('graficoFaturamento').getContext("2d");
-      GRAFICO = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: LINHAS,
-        datasets: [
-          {
-            label: "Faturamento",
-            data: VALORES,
-            borderWidth: 6,
-            fill: true,
-            backgroundColor: '#fffdf7',
-            borderColor: '#f58637',
-            pointBackgroundColor: '#f58637',
-            pointRadius: 5,
-            pointHoverRadius: 5,
-            pointHitDetectionRadius: 35,
-            pointBorderWidth: 2.5,
-          },
-        ],
-      },
-      options: {
-        legend: {
-          display: false
-        },
-        tooltips: {
-          // Disable the on-canvas tooltip
-          enabled: false,
+  salvarRecente: (id) => {
+    var headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("Authorization", app.method.obterValorSessao('token'));
 
-          custom: function (tooltipModel) {
-            // Tooltip Element
-            var tooltipEl = document.getElementById('chartjs-tooltip');
+    fetch('/relatorio/recente', { method: 'POST', headers: headers, body: JSON.stringify({ id: id }) })
+    .then(response => response.json())
+    .then(result => {
+      if (result.status === 'success') {
+        relatorio.method.renderizarRecentes(result.data);
+      }
+    });
+  },
 
-            // Create element on first render
-            if (!tooltipEl) {
-              tooltipEl = document.createElement('div');
-              tooltipEl.id = 'chartjs-tooltip';
-              tooltipEl.innerHTML = '<table></table>';
-              document.body.appendChild(tooltipEl);
-            }
+  verificarFavorito: (id) => {
+    let favs = JSON.parse(localStorage.getItem('bi_favoritos')) || [];
+    if (favs.includes(id)) {
+      $("#btn-favoritar").removeClass('btn-outline-warning').addClass('btn-warning text-white');
+    } else {
+      $("#btn-favoritar").removeClass('btn-warning text-white').addClass('btn-outline-warning');
+    }
+  },
 
-            // Hide if no tooltip
-            if (tooltipModel.opacity === 0) {
-              tooltipEl.style.opacity = 0;
-              return;
-            }
+  // =================== NAVEGAÇÃO ===================
+  abrirRelatorio: (id) => {
+    let config = REPORTS_CONFIG[id];
+    if (!config) return;
+    RELATORIO_ATUAL = config;
 
-            // Set caret Position
-            tooltipEl.classList.remove('above', 'below', 'no-transform');
-            if (tooltipModel.yAlign) {
-              tooltipEl.classList.add(tooltipModel.yAlign);
-            } else {
-              tooltipEl.classList.add('no-transform');
-            }
+    // Ajustar UI
+    $("#container-empty-state").addClass('hidden');
+    $("#container-relatorio-ativo").removeClass('hidden');
+    $("#lbl-relatorio-titulo").text(config.titulo);
+    $("#lbl-relatorio-desc").text(config.desc);
+    
+    // Limpar estados
+    $("#container-kpis").html('');
+    $("#container-mini-dash").addClass('hidden');
+    $("#container-grafico").addClass('hidden');
+    if (CHART_INSTANCIA) {
+      CHART_INSTANCIA.destroy();
+      CHART_INSTANCIA = undefined;
+    }
+    if (TABELA_INSTANCIA) {
+      TABELA_INSTANCIA.destroy();
+      $('#tabela-relatorio').empty();
+      TABELA_INSTANCIA = undefined;
+    } else {
+      $('#tabela-relatorio').empty();
+    }
 
-            function getBody(bodyItem) {
-              return bodyItem.lines;
-            }
+    relatorio.method.verificarFavorito(id);
+    relatorio.method.montarFiltros(config.filtros);
 
-            // Set Text
-            if (tooltipModel.body) {
-              var titleLines = tooltipModel.title || [];
-              var bodyLines = tooltipModel.body.map(getBody);
+    // Destaque visual no menu
+    $(".list-group-item").removeClass('active bg-light font-weight-bold');
+    event.currentTarget.classList.add('active', 'bg-light', 'font-weight-bold');
+  },
 
-              var innerHtml = '<thead>';
+  // =================== FILTROS ===================
+  montarFiltros: (filtrosArray) => {
+    let html = '';
+    
+    // Hoje
+    let dataHoje = new Date().toISOString().split('T')[0];
+    let dataTrintaDias = new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0];
 
-              titleLines.forEach(function (title) {
-                innerHtml += '<tr><th>' + title + '</th></tr>';
-              });
-              innerHtml += '</thead><tbody>';
-
-              bodyLines.forEach(function (body, i) {
-
-                //console.log('body', body)
-
-                let valor = body[0].split(':')[1].trim();
-                let texto = body[0].split(':')[0].trim();
-
-                let formatado = texto + ': <b>R$ ' + (parseFloat(valor).toFixed(2)).toString().replace('.', ',') + '</b>';
-
-                innerHtml += '<tr><td>' + formatado + '</td></tr>';
-              });
-              innerHtml += '</tbody>';
-
-              var tableRoot = tooltipEl.querySelector('table');
-              tableRoot.innerHTML = innerHtml;
-            }
-
-            // `this` will be the overall tooltip
-            var position = this._chart.canvas.getBoundingClientRect();
-
-            // Display, position, and set styles for font
-            tooltipEl.style.opacity = 1;
-            tooltipEl.style.position = 'absolute';
-            tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX - (130) + 'px';
-            tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
-            tooltipEl.style.fontFamily = tooltipModel._bodyFontFamily;
-            tooltipEl.style.fontSize = tooltipModel.bodyFontSize + 'px';
-            tooltipEl.style.fontStyle = tooltipModel._bodyFontStyle;
-            tooltipEl.style.padding = tooltipModel.yPadding + 'px ' + tooltipModel.xPadding + 'px';
-            tooltipEl.style.pointerEvents = 'none';
-          }
-        },
-        scales: {
-          yAxes: [
-            {
-              ticks: {
-                beginAtZero: false,
-                fontColor: '#999999',
-                fontSize: 10,
-                callback: (value, index, values) => {
-                  if (parseInt(value) >= 1000) {
-                    return 'R$ ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                  } else {
-                    return 'R$ ' + value;
-                  }
-                }
-              },
-              gridLines: {
-                display: false,
-                drawBorder: false
-              }
-            },
-          ],
-          xAxes: [
-            {
-              ticks: {
-                fontColor: '#999999',
-                fontSize: 10
-              },
-              gridLines: {
-                display: false,
-                drawBorder: false
-              }
-            }
-          ]
-        },
-      },
+    filtrosArray.forEach(f => {
+      if (f === 'data_inicio') {
+        html += `
+          <div class="col-md-3 mb-2">
+            <label class="form-label text-muted small font-weight-bold mb-1">Data Início</label>
+            <input type="date" class="form-control form-control-sm" id="filtro_data_inicio" value="${dataTrintaDias}">
+          </div>
+        `;
+      }
+      if (f === 'data_fim') {
+        html += `
+          <div class="col-md-3 mb-2">
+            <label class="form-label text-muted small font-weight-bold mb-1">Data Fim</label>
+            <input type="date" class="form-control form-control-sm" id="filtro_data_fim" value="${dataHoje}">
+          </div>
+        `;
+      }
+      if (f === 'categoria') {
+        html += `
+          <div class="col-md-3 mb-2">
+            <label class="form-label text-muted small font-weight-bold mb-1">Categoria</label>
+            <select class="form-select form-select-sm" id="filtro_categoria">
+              <option value="0">Todas</option>
+              <option value="1">Delivery</option>
+              <option value="2">Retirada</option>
+            </select>
+          </div>
+        `;
+      }
+      if (f === 'ano') {
+        let anoAtual = new Date().getFullYear();
+        html += `
+          <div class="col-md-3 mb-2">
+            <label class="form-label text-muted small font-weight-bold mb-1">Ano</label>
+            <select class="form-select form-select-sm" id="filtro_ano">
+              <option value="${anoAtual}">${anoAtual}</option>
+              <option value="${anoAtual - 1}">${anoAtual - 1}</option>
+            </select>
+          </div>
+        `;
+      }
     });
 
+    html += `
+      <div class="col-md-2 mb-2">
+        <button class="btn btn-warning btn-sm w-100" onclick="relatorio.method.executarRelatorio()"><i class="fas fa-play"></i> Gerar</button>
+      </div>
+    `;
 
-    }else{
-      $("#lblNenhumFaturamento").removeClass('hidden');
-    }
+    $("#container-filtros").html(html);
   },
 
-  atualizarTotais: (lista) => {
-    if(lista && lista.length > 0){
-      let totalFaturado = 0;
-      let totalPedido = 0;
+  // =================== MOTOR DE EXECUÇÃO ===================
+  executarRelatorio: () => {
+    if (!RELATORIO_ATUAL) return;
 
-      $.each(lista, (i, e) => {
-        totalFaturado += parseFloat(e.total) || 0;
-        totalPedido += parseInt(e.pedidos) || 0;
-      });
+    let payload = {
+      relatorio_id: RELATORIO_ATUAL.id
+    };
 
-      const ticketMedio = totalPedido > 0 
-        ? (totalFaturado / totalPedido).toFixed(2) 
-        : "0.00";
+    // Coletar filtros
+    if ($("#filtro_data_inicio").length) payload.data_inicio = $("#filtro_data_inicio").val();
+    if ($("#filtro_data_fim").length) payload.data_fim = $("#filtro_data_fim").val();
+    if ($("#filtro_categoria").length) payload.categoria = $("#filtro_categoria").val();
+    if ($("#filtro_ano").length) payload.ano = $("#filtro_ano").val();
 
-      $("#lblTotalFaturamento").text(`R$ ${totalFaturado.toFixed(2).replace('.', ',')}`);
-      $("#lblTotalPedidos").text(totalPedido);
-      $("#lblTicketMedio").text(`R$ ${ticketMedio.replace('.', ',')}`);
-      
-      $("#lblNenhumFaturamento").addClass('hidden');
-
-      console.log('Totais atualizados: ', {
-        totalFaturado: totalFaturado.toFixed(2),
-        totalPedido,
-        ticketMedio
-      });
-    } else {
-      $("#lblTotalFaturamento").text('R$ 0,00');
-      $("#lblTotalPedidos").text('0');
-      $("#lblTicketMedio").text('R$ 0,00');
-      
-      $("#lblNenhumFaturamento").removeClass('hidden');
-    }
-},
-
-  // ------------- Historico --------------
-  bloquearDatasFiltrosHistorico: () => {
-    var umAnoAtras = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
-
-    let diaIni = umAnoAtras.getDate();
-    let mesIni = umAnoAtras.getMonth() + 1;
-    let anoIni = umAnoAtras.getFullYear();
-
-    if(diaIni < 10) diaIni = '0' + diaIni;
-    if(mesIni < 10) mesIni = '0' + mesIni;
-
-    $("#txtDataInicioHistorico").attr('min', `${anoIni}-${mesIni}-${diaIni}`);
-    $("#txtDataFimHistorico").attr('min', `${anoIni}-${mesIni}-${diaIni}`);
-
-    let diaFim = new Date().getDate();
-    let mesFim = new Date().getMonth() + 1;
-    let anoFim = new Date().getFullYear();
-
-    if(diaFim < 10) diaFim = '0' + diaFim;
-    if(mesFim < 10) mesFim = '0' + mesFim;
-
-    $("#txtDataInicioHistorico").attr('max', `${anoFim}-${mesFim}-${diaFim}`);
-    $("#txtDataFimHistorico").attr('max', `${anoFim}-${mesFim}-${diaFim}`);
-
-  },
-
-  carregarDataAtualFiltroHistorico: () => {
-
-    var date = new Date();
-    var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-    var lastDay = new Date();
-
-    let diaIni = firstDay.getDate();
-    let mesIni = firstDay.getMonth() + 1;
-    let anoIni = firstDay.getFullYear();
-    
-    let diaFim = lastDay.getDate();
-    let mesFim = lastDay.getMonth() + 1;
-    let anoFim = lastDay.getFullYear();
-
-    if(diaIni < 10) diaIni = '0' + diaIni;
-    if(mesIni < 10) mesIni = '0' + mesIni;
-
-    if(diaFim < 10) diaFim = '0' + diaFim;
-    if(mesFim < 10) mesFim = '0' + mesFim;
-
-    $("#txtDataInicioHistorico").val(`${anoIni}-${mesIni}-${diaIni}`);
-    $("#txtDataFimHistorico").val(`${anoFim}-${mesFim}-${diaFim}`);
-
-  },
-
-  filtrarHistorico: () => {
-    let datainicio = $("#txtDataInicioHistorico").val();
-    let datafim = $("#txtDataFimHistorico").val();
-
-    if(datainicio == ''){
-      app.method.mensagem("Informe uma data de início válida")
+    // Validações
+    if (payload.data_inicio && payload.data_fim && new Date(payload.data_inicio) > new Date(payload.data_fim)) {
+      app.method.mensagem("A data inicial não pode ser maior que a final.");
       return;
-    }
-
-    if(datafim == ''){
-      app.method.mensagem("Infomer uma data fim válida");
-      return;
-    }
-
-    var dados = {
-      datainicio: datainicio,
-      datafim: datafim,
     }
 
     app.method.loading(true);
-
-    app.method.post('/pedido/historico', JSON.stringify(dados),
-
+    app.method.post('/relatorio/gerar', JSON.stringify(payload),
       (response) => {
-        console.log('response: ', response);
         app.method.loading(false);
-
-        if(response.status === 'error'){
+        if (response.status === 'error') {
           app.method.mensagem(response.message);
           return;
         }
-
-        relatorio.method.listarPedidos(response.data);
-
+        relatorio.method.renderizarKPIs(response.data.kpis);
+        relatorio.method.renderizarGrafico(response.data.grafico);
+        relatorio.method.renderizarTabela(response.data.tabela);
       },
       (error) => {
-        console.log("error", error);
         app.method.loading(false);
+        app.method.mensagem("Falha na comunicação com o servidor.");
       }
-    );    
+    );
   },
 
-  listarPedidos: (list) => {
-    $(".table-responsive").html('');
-
-    if(list.length > 0) {
-      $(".table-responsive").append(relatorio.template.tablePedido);
-
-      let valor_total = 0;
-
-      $.each(list, (i, e) => {
-        let status = ''
-        
-        if(e.idpedidostatus == 1) {
-          status = `<i class="far fa-dot-circle"></i> ${e.pedidostatus}`
-        }else  if(e.idpedidostatus == 2) {
-          status = `<i class="far fa-thumbs-up"></i> ${e.pedidostatus}`
-        }else  if(e.idpedidostatus == 3) {
-          status = `<i class="far fa-clock"></i> ${e.pedidostatus}`
-        }else if(e.idpedidostatus == 4) {
-          status = `<i class="fas fa-motorcycle"></i> ${e.pedidostatus}`
-        }else if(e.idpedidostatus == 5) {
-          status = `<i class="far fa-check-circle"></i> ${e.pedidostatus}`
-        }else if(e.idpedidostatus == 6) {
-          status = `<i class="far fa-times-circle"></i> ${e.pedidostatus}`
-        }
-
-        let databanco = e.datacadastro.split('T')[0];
-        let horabanco = e.datacadastro.split('T')[1];
-
-        let datacadastro = `${databanco.split('-')[2]}/${databanco.split('-')[1]}/${databanco.split('-')[0]} às ${horabanco.split(':')[0]}:${horabanco.split(':')[1]}`;
-
-        let _temp = relatorio.template.trPedido.replace(/\${idpedido}/g, e.idpedido)
-          .replace(/\${cliente}/g, e.nomecliente)
-          .replace(/\${tipoentrega}/g, e.tipoentrega)
-          .replace(/\${formapagamento}/g, e.formapagamento)
-          .replace(/\${datacadastro}/g, datacadastro)
-          .replace(/\${status}/g, status)
-          .replace(/\${total}/g, `R$ ${(parseFloat(e.total).toFixed(2)).toString().replace('.', ',')}`);
-
-        $("#listaPedidos").append(_temp);
-
-        valor_total += parseFloat(e.total);
-
-        if((i + 1) == list.length){
-          $("#lblTotalSomaPedidos").text(`R$ ${(parseFloat(valor_total).toFixed(2)).toString().replace('.', ',')}`);
-
-          $("#data-table").DataTable({
-            destroy: true,
-            aaSorting: [[4, 'desc']],
-            dom: 'Bfrtipl',
-            buttons: ['pageLength'],
-            language: {
-              url:'./js/datatable.pt-BR.json',
-            },
-            columnDefs: [
-              { target: 'no-sort', orderable: false }
-            ]
-          })
-        }
-
-      });
-
-    }else{
-      $("#table-responsive").append('<p class="mb-0>Nenhum pedido encontrado no periodo selecionado.</p>')
+  // =================== RENDERIZADORES ===================
+  renderizarKPIs: (kpis) => {
+    if (!kpis || kpis.length === 0) {
+      $("#container-mini-dash").addClass('hidden');
+      return;
     }
+    
+    let html = '';
+    kpis.forEach(kpi => {
+      let cor = kpi.cor || 'primary';
+      let icone = kpi.icone || 'fas fa-chart-line';
+      html += `
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm rounded">
+            <div class="card-body p-3">
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-${cor} text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                  <i class="${icone}"></i>
+                </div>
+                <div>
+                  <p class="text-muted mb-0" style="font-size: 12px; font-weight: 600; text-transform: uppercase;">${kpi.titulo}</p>
+                  <h4 class="font-weight-bold mb-0 text-dark">${kpi.valor}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    $("#container-kpis").html(html);
+    $("#container-mini-dash").removeClass('hidden');
   },
-}
 
-relatorio.template = {
-  tablePedido: `
-    <table id="data-table" class="table data-table">
-      <thead>
-        <tr>
-          <th># Código</th>
-          <th>Cliente</th>
-          <th>Tipo</th>
-          <th>Pagamento</th>
-          <th>Criado em</th>
-          <th>Status</th>
-          <th>(R$) Total</th>
-          <th class="no-sort">Ações</th>
-        </tr>
-      </thead>
-      <tbody id="listaPedidos">
-          
-      </tbody> 
-      <tfoot>
-        <tr>
-          <th colspan="6"></th>
-          <th><b class="color-green" id="lblTotalSomaPedidos">-</b></th>
-          <th></th>
-        </tr>
-      </tfoot>
-    </table>
-  `,
+  renderizarGrafico: (graficoData) => {
+    if (!graficoData || !graficoData.labels || graficoData.labels.length === 0 || !RELATORIO_ATUAL.grafico) {
+      $("#container-grafico").addClass('hidden');
+      return;
+    }
 
-  trPedido: `
-    <tr>
-      <td>\${idpedido}</td>
-      <td>\${cliente}</td>
-      <td>\${tipoentrega}</td>
-      <td>\${formapagamento}</td>
-      <td>\${datacadastro}</td>
-      <td>\${status}</td>
-      <td><b class="color-green">\${total}</b></td>
-      <td>
-        <a class="btn btn-white btn-sm" onclick="pedido.method.abrirModalDetalhes('\${idpedido}')">
-          <i class="fas fa-receipt"></i>&nbsp; Detalhes
-        </a>
-      </td>
-    </tr>
-  `,
+    $("#container-grafico").removeClass('hidden');
+    
+    if (CHART_INSTANCIA) {
+      CHART_INSTANCIA.destroy();
+    }
+
+    const ctx = document.getElementById('grafico-relatorio').getContext("2d");
+    
+    let chartConfig = {
+      type: RELATORIO_ATUAL.grafico,
+      data: {
+        labels: graficoData.labels,
+        datasets: [{
+          label: graficoData.titulo || 'Valor',
+          data: graficoData.valores,
+          backgroundColor: RELATORIO_ATUAL.grafico === 'line' ? 'rgba(245, 134, 55, 0.1)' : ['#f58637', '#17a2b8', '#28a745', '#ffc107', '#dc3545', '#6c757d'],
+          borderColor: '#f58637',
+          borderWidth: RELATORIO_ATUAL.grafico === 'line' ? 3 : 0,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        legend: { display: RELATORIO_ATUAL.grafico === 'doughnut' }
+      }
+    };
+
+    CHART_INSTANCIA = new Chart(ctx, chartConfig);
+  },
+
+  renderizarTabela: (tabelaData) => {
+    if (TABELA_INSTANCIA) {
+      TABELA_INSTANCIA.destroy();
+      $('#tabela-relatorio').empty();
+    } else {
+      $('#tabela-relatorio').empty();
+    }
+
+    if (!tabelaData || !tabelaData.colunas || tabelaData.linhas.length === 0) {
+      $('#tabela-relatorio').html('<tbody><tr><td class="text-center p-4">Nenhum dado encontrado para o período.</td></tr></tbody>');
+      return;
+    }
+
+    // Montar Header
+    let thead = '<thead><tr>';
+    tabelaData.colunas.forEach(col => {
+      thead += `<th>${col.label}</th>`;
+    });
+    thead += '</tr></thead>';
+
+    // Montar Body
+    let tbody = '<tbody>';
+    tabelaData.linhas.forEach(linha => {
+      tbody += '<tr>';
+      tabelaData.colunas.forEach(col => {
+        let val = linha[col.id];
+        // Formatações
+        if (col.type === 'currency' && val != null) {
+          val = `R$ ${parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        }
+        else if (col.type === 'date' && val != null) {
+          if (String(val).includes('/')) {
+            // já está formatada pelo SQL (ex: 12/07/2026)
+          } else {
+            let d = new Date(val);
+            if (!isNaN(d.getTime())) val = d.toLocaleDateString('pt-BR');
+          }
+        }
+        
+        tbody += `<td>${val ?? '-'}</td>`;
+      });
+      tbody += '</tr>';
+    });
+    tbody += '</tbody>';
+
+    // Montar Footer
+    let tfoot = '';
+    if (tabelaData.totais) {
+      tfoot = '<tfoot><tr>';
+      tabelaData.colunas.forEach((col, idx) => {
+        if (idx === 0) {
+          tfoot += `<td>Total</td>`;
+        } else {
+          let val = tabelaData.totais[col.id] || '';
+          if (col.type === 'currency' && val !== '') val = `R$ ${parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+          tfoot += `<td>${val}</td>`;
+        }
+      });
+      tfoot += '</tr></tfoot>';
+    }
+
+    $('#tabela-relatorio').html(thead + tbody + tfoot);
+
+    TABELA_INSTANCIA = $('#tabela-relatorio').DataTable({
+      language: { url: './js/datatable.pt-BR.json' },
+      pageLength: 25,
+      dom: 'Bfrtipl',
+      buttons: []
+    });
+  },
+
+  // =================== EXPORTAÇÃO ===================
+  exportarCSV: () => {
+    if (!TABELA_INSTANCIA) {
+      app.method.mensagem("Não há dados para exportar.");
+      return;
+    }
+    // Uma forma simples de exportar a tabela do DOM
+    let csv = [];
+    let rows = document.querySelectorAll("#tabela-relatorio tr");
+    
+    for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll("td, th");
+        for (let j = 0; j < cols.length; j++) 
+            row.push('"' + cols[j].innerText.replace(/"/g, '""') + '"');
+        csv.push(row.join(";"));
+    }
+    
+    let csvFile = new Blob(["\ufeff" + csv.join("\n")], {type: "text/csv;charset=utf-8;"});
+    let downloadLink = document.createElement("a");
+    downloadLink.download = `Relatorio_${RELATORIO_ATUAL.id}_${new Date().getTime()}.csv`;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  },
+
+  imprimirRelatorio: () => {
+    window.print();
+  }
 }

@@ -31,6 +31,14 @@ pedido.method = {
     if(pedidoLocal != undefined) {
 
       let order = JSON.parse(pedidoLocal);
+      let idPedido = typeof order === 'object' && order !== null ? order.order : order;
+
+      if (!idPedido) {
+        app.method.removersecao('order');
+        document.querySelector('#containerNenhumPedido').classList.remove('hidden'); 
+        document.querySelector('#containerAcompanhamento').classList.add('hidden');
+        return;
+      }
 
       ORDER = order;
 
@@ -40,13 +48,15 @@ pedido.method = {
 
       app.method.loading(true);
 
-      app.method.get('/pedido/' + order.order,
+      app.method.get('/pedido/' + idPedido,
         (response) => {
           console.log(response);
           app.method.loading(false);
 
-          if (response.status == "error"){
-            app.method.mensagem(response.messege)
+          if (response.status == "error" || !response.data){
+            app.method.removersecao('order');
+            document.querySelector('#containerNenhumPedido').classList.remove('hidden'); 
+            document.querySelector('#containerAcompanhamento').classList.add('hidden');
             return;
           }
 
@@ -57,13 +67,13 @@ pedido.method = {
           let horarioFormatado = datacadastro[1].split(':')[0] + ':' + datacadastro[1].split(':')[1];
 
           let temp = pedido.template.dadospedido.replace(/\${data}/g, `${dataFormatada} às ${horarioFormatado}`)
-            .replace(/\${valor}/g, `R$ ${parseFloat(response.data.total).toFixed(2).replace('.' , ',')}`);
+            .replace(/\${valor}/g, `R$ ${parseFloat(response.data.total).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
 
           document.querySelector('#containerAcompanhamento').innerHTML += temp;
 
           pedido.method.carregarEtapas(response.data);
 
-          pedido.method.carregarModalDetalhes(response.data);
+          pedido.method.carregarModalDetalhes(response);
 
         },
         (error) => {
@@ -148,7 +158,15 @@ pedido.method = {
   
       let temp = pedido.template.cancelado.replace(/\${motivo}/g, _motivo);
   
-      document.querySelector('#containerAcompanhamento').innerHTML += temp;
+      if (app.method.obterValorSessao('hide_timeline_' + data.idpedido) !== 'true') {
+        document.querySelector('#containerAcompanhamento').innerHTML += temp;
+      }
+
+      setTimeout(() => {
+        app.method.gravarValorSessao('hide_timeline_' + data.idpedido, 'true');
+        let cardCancelado = document.querySelector('.card-status-pedido.cancelado');
+        if(cardCancelado) cardCancelado.remove();
+      }, 120000); // 2 minutos
       return;
     }
 
@@ -215,15 +233,28 @@ pedido.method = {
         .replace(/\${status-icon}/g, 'status')
         .replace(/\${descricao}/g, '')
 
-      indo = indo.replace(/\${status}/g, 'active')
+      indo = indo.replace(/\${status}/g, 'completed')
         .replace(/\${status-icon}/g, '')
         .replace(/\${descricao}/g, 'Seu pedido foi entregue')
+        .replace(/fa-motorcycle|fa-box/g, 'fa-check-double')
+
+      setTimeout(() => {
+        app.method.gravarValorSessao('hide_timeline_' + data.idpedido, 'true');
+        let timeline = document.querySelector('.timeline-pedidos');
+        if(timeline) timeline.remove();
+      }, 120000); // 2 minutos
     }
 
-
-    document.querySelector('#containerAcompanhamento').innerHTML += pedidoEnviado;
-    document.querySelector('#containerAcompanhamento').innerHTML += preparando;
-    document.querySelector('#containerAcompanhamento').innerHTML += indo;
+    if (app.method.obterValorSessao('hide_timeline_' + data.idpedido) !== 'true') {
+      let htmlEtapas = `
+        <div class="timeline-pedidos">
+          ${pedidoEnviado}
+          ${preparando}
+          ${indo}
+        </div>
+      `;
+      document.querySelector('#containerAcompanhamento').innerHTML += htmlEtapas;
+    }
 
   },
 
@@ -232,10 +263,14 @@ pedido.method = {
   },
 
   fecharModalDetalhesPedido: () => {
-    MODAL_DETALHES.hidden();
+    if (document.activeElement) {
+      document.activeElement.blur();
+    }
+    MODAL_DETALHES.hide();
   },
 
-  carregarModalDetalhes: (data) => {
+  carregarModalDetalhes: (response) => {
+    let data = response.data || response;
     document.querySelector("#itensPedido").innerHTML = '';
 
     document.querySelector('#lblNomeCliente').innerText = data.nomecliente;
@@ -248,26 +283,36 @@ pedido.method = {
     }
     else if (data.idformapagamento == 2) {
       document.querySelector('#lblFormaPagamentoIcon').innerHTML = '<i class="fas fa-coins"></i>';
-      document.querySelector('#lblFormaPagamentoDescricao').innerHTML = data.troco != null ? `Troco para ${(data.troco).toFixed(2).replace('.', ',')} reais` : 'Pagamento na entrega do pedido';
+      document.querySelector('#lblFormaPagamentoDescricao').innerHTML = data.troco != null ? `Troco para ${(data.troco).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} reais` : 'Pagamento na entrega do pedido';
     }
     else {
       document.querySelector('#lblFormaPagamentoIcon').innerHTML = '<i class="fas fa-credit-card"></i>';
       document.querySelector('#lblFormaPagamentoDescricao').innerHTML = data.idtipoentrega == 1 ? 'Levar maquininha de cartão' : 'Pagamento na retirada do pedido';
     }
 
-    ORDER.cart.forEach((e, i) => {
+    let cartArray = response.cart || (ORDER && ORDER.cart) || [];
 
+    cartArray.forEach((e) => {
       let itens = '';
+      let totalOpcionais = 0;
 
-      if (e.opcionais.length > 0) {
-        // monta a lista de opcionais
+      // Note: A API retorna os opcionais de forma diferente (nomeopcional, valoropcional diretamente no item) 
+      // Se tivermos e.opcionais (quando gravado pelo frontend), lemos a partir dali. 
+      if (e.opcionais && e.opcionais.length > 0) {
         for (let index = 0; index < e.opcionais.length; index++) {
           let element = e.opcionais[index];
-          
-          itens += pedido.template.opcional.replace(/\${nome}/g, `${e.quantidade}x ${element.nomeopcional}`)
-          .replace(/\${preco}/g, `+ R$ ${(e.quantidade * element.valoropcional).toFixed(2).replace('.', ',')}`)
+          totalOpcionais += parseFloat(element.valoropcional || 0);
 
+          itens += pedido.template.opcional
+            .replace(/\${nome}/g, `1x ${element.nomeopcional}`)
+            .replace(/\${preco}/g, `+ R$ ${parseFloat(element.valoropcional || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
         }
+      } else if (e.nomeopcional) {
+          // Quando vem da API através do obterItensPedidos
+          totalOpcionais += parseFloat(e.valoropcional || 0);
+          itens += pedido.template.opcional
+            .replace(/\${nome}/g, `1x ${e.nomeopcional}`)
+            .replace(/\${preco}/g, `+ R$ ${parseFloat(e.valoropcional || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
       }
 
       let obs = '';
@@ -276,44 +321,32 @@ pedido.method = {
         obs = pedido.template.obs.replace(/\${observacao}/g, e.observacao);
       }
 
-      let temp = pedido.template.produto.replace(/\${guid}/g, e.guid)
+      let subTotalItem = parseFloat(e.valor || 0) * parseInt(e.quantidade || 1);
+
+      let temp = pedido.template.produto
+        .replace(/\${guid}/g, e.guid)
         .replace(/\${nome}/g, `${e.quantidade}x ${e.nome}`)
-        .replace(/\${preco}/g, `R$ ${(e.quantidade * e.valor).toFixed(2).replace('.', ',')}`)
+        .replace(/\${preco}/g, `R$ ${subTotalItem.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`)
         .replace(/\${obs}/g, obs)
-        .replace(/\${opcionais}/g, itens)
+        .replace(/\${opcionais}/g, itens);
 
       document.querySelector('#itensPedido').innerHTML += temp;
-
     });
 
-    let total = 0;
-
-    ORDER.cart.forEach((e, i) => {
-
-      let subTotal = 0;
-
-        if(e.opcionais.length > 0){
-          for (let index = 0; index < e.opcionais.length; index++){
-            let element = e.opcionais[index];
-            subTotal += element.valoropcional * e.quantidade;
-          }
-        }
-
-      subTotal += (e.quantidade * e.valor);
-      total += subTotal;
-
-    });
-
-    // valida se tem taxa
     if (data.taxaentrega > 0) {
       let valorTaxa = data.taxaentrega ? parseFloat(data.taxaentrega) : 0;
-      let temptaxa = pedido.template.taxaentrega.replace(/\${total}/g, `+ R$ ${valorTaxa.toFixed(2).replace('.', ',')}`)
+      let temptaxa = pedido.template.taxaentrega.replace(/\${total}/g, `+ R$ ${valorTaxa.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
       document.querySelector('#itensPedido').innerHTML += temptaxa;
     }
 
-    let temptotal = pedido.template.total.replace(/\${total}/g, `R$ ${parseFloat(data.total).toFixed(2).replace('.', ',')}`)
-    document.querySelector('#itensPedido').innerHTML += temptotal;
+    if (data.desconto > 0) {
+      let valorDesconto = data.desconto ? parseFloat(data.desconto) : 0;
+      let tempdesconto = pedido.template.desconto.replace(/\${total}/g, `- R$ ${valorDesconto.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+      document.querySelector('#itensPedido').innerHTML += tempdesconto;
+    }
 
+    let temptotal = pedido.template.total.replace(/\${total}/g, `R$ ${parseFloat(data.total).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+    document.querySelector('#itensPedido').innerHTML += temptotal;
   },
 
 }
@@ -350,7 +383,7 @@ pedido.template = {
     ,
     
     etapa: `
-    <div class="card card-status-pedido mt-2 \${status}">
+    <div class="card card-status-pedido mt-3 \${status}">
       <div class="img-icon-details" \${status-icon}>
         \${icon}
       </div>
@@ -361,59 +394,77 @@ pedido.template = {
     </div>
     `,
     produto: `
-    <div class="card-item mb-2">
-      <div class="container-detalhes">
-        <div class="detalhes-produto">
-          <div class="infos-produto">
-            <p class="name"><b>\${nome}</b></p>
-            <p class="price"><b>\${preco}</b></p>
-          </div>
+    <div class="pedido-detalhe-card mb-3">
+      <div class="pedido-detalhe-produto">
+        <div>
+          <p class="pedido-detalhe-nome mb-1">
+            <b>\${nome}</b>
+          </p>
           \${opcionais}
           \${obs}
-        </div> 
-        <div class="detalhes-produto-edit" onclick="carrinho.method.abrirModalOpcoesProduto('\${guid}')">
-          <i class="fas fa-pencil-alt"></i>
         </div>
+
+        <p class="pedido-detalhe-preco mb-0">
+          <b>\${preco}</b>
+        </p>
       </div>
     </div>
   `,
 
   opcional: `
-    <div class="infos-produto">
-      <p class="name-opcional mb-0">\${nome}</p>
-      <p class="price-opcional mb-0">\${preco}</p>
+    <div class="pedido-detalhe-opcional">
+      <span class="pedido-detalhe-opcional-nome">
+        \${nome}
+      </span>
+
+      <span class="pedido-detalhe-opcional-preco">
+        \${preco}
+      </span>
     </div>
   `,
 
   obs: `
-    <div class="infos-produto">
-      <p class="obs-opcional mb-0">- \${observacao}</p>
+    <div class="pedido-detalhe-obs">
+      <i class="fas fa-comment-alt"></i>
+      <span>\${observacao}</span>
     </div>
   `,
 
   taxaentrega: `
-    <div class="card-item mb-2">
-      <div class="detalhes-produto">
-        <div class="infos-produto">
-          <p class="name mb-0"><i class="fas fa-motorcycle">&nbsp;</i><b>Taxa de entrega</b></p>
-          <p class="price mb-0"><b>\${total}</b></p>
-        </div>
-      </div>
-    </div>
-  `
-  ,
+    <div class="pedido-detalhe-card pedido-detalhe-taxa mb-2">
+      <div class="pedido-detalhe-produto">
+        <p class="pedido-detalhe-nome mb-0">
+          <i class="fas fa-motorcycle"></i>&nbsp;
+          <b>Taxa de entrega</b>
+        </p>
 
-  total: `
-    <div class="card-item mb-2">
-      <div class="detalhes-produto">
-        <div class="infos-produto">
-          <p class="name-total mb-0"><b>Total</b></p>
-          <p class="price-total mb-0"><b>\${total}</b></p>
-        </div>
+        <p class="pedido-detalhe-preco mb-0">
+          <b>\${total}</b>
+        </p>
       </div>
     </div>
   `,
 
+  desconto: `
+    <div class="pedido-detalhe-card pedido-detalhe-taxa mb-2" style="color: #28a745;">
+      <div class="pedido-detalhe-produto">
+        <p class="pedido-detalhe-nome mb-0">
+          <i class="fas fa-tags"></i>&nbsp;
+          <b>Desconto</b>
+        </p>
+
+        <p class="pedido-detalhe-preco mb-0">
+          <b>\${total}</b>
+        </p>
+      </div>
+    </div>
+  `,
+
+  total: `
+    <div class="pedido-detalhe-total-card mb-2">
+      <span>Total</span>
+      <b>\${total}</b>
+    </div>
+  `,
+
 }
-
-

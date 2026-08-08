@@ -2,17 +2,15 @@
 
   // ── Configurações ─────────────────────────────────────────────────────────
   const CONFIG = {
-    pollMs          : 10000,   // intervalo de verificação de novos pedidos (10 s)
+    pollMs          : 5000,   // intervalo de verificação de novos pedidos (5 s)
     minAlertGapMs   : 4000,    // anti-spam entre alertas vindos de abas diferentes (4 s)
     soundRepeatMs   : 2000,   // intervalo para repetir o som enquanto alerta estiver ativo (2 s)
     channelName     : 'delivery_pedidos_channel',
     storageLastId   : 'delivery_last_pedido_id',
     storageAlertAt  : 'delivery_last_alert_at',
-    soundUrl        : '', // deixe '' para usar o beep embutido
+    soundUrl        : '', // usa o bipe artificial embutido
     autoStart       : true,
-    logoPath        : '/img/logo.png',
-    // Páginas consideradas "tela de pedidos" — ao entrar nelas, o alerta é dispensado
-    pedidosPathMatch: ['pedidos.html'],
+    logoPath        : '../img/logo.png',
   };
 
   // ── Estado interno ────────────────────────────────────────────────────────
@@ -24,6 +22,7 @@
   let _soundTimer    = null;
   let _alertaAtivo   = false;   // true enquanto houver alerta não dispensado
   let _toastEl       = null;    // referência ao toast atual (único na tela)
+  let _firstPoll     = true;    // flag para ignorar pedidos antigos no primeiro carregamento da aba
 
   const _tituloOriginal = document.title;
 
@@ -31,11 +30,6 @@
   const bc = ('BroadcastChannel' in window)
     ? new BroadcastChannel(CONFIG.channelName)
     : null;
-
-  // ── Verifica se estamos na página de pedidos ──────────────────────────────
-  // function estaNaPaginaDePedidos() {
-  //   return CONFIG.pedidosPathMatch.some(p => window.location.pathname.includes(p));
-  // }
 
   // ── Helpers de localStorage ───────────────────────────────────────────────
   function getLastId() {
@@ -214,7 +208,7 @@
 
     const linhas = pedidos.slice(0, 4).map(p => {
       const tipo  = parseInt(p.idtipoentrega) === 1 ? '🛵 Delivery' : '📦 Retirada';
-      const total = parseFloat(p.total || 0).toFixed(2).replace('.', ',');
+      const total = parseFloat(p.total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
       return `<div>• <b>#${p.idpedido}</b> — ${p.nomecliente} | ${tipo} | R$ ${total}</div>`;
     }).join('');
 
@@ -300,6 +294,8 @@
 
   // ── Som ───────────────────────────────────────────────────────────────────
   function playSound() {
+    if (app.method.obterValorSessao('som-mutado') === 'true') return;
+
     if (CONFIG.soundUrl) {
       try {
         if (!_audio) _audio = new Audio(CONFIG.soundUrl);
@@ -317,6 +313,7 @@
         _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
       const ctx = _audioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
       [[880, 0], [1100, 0.2], [880, 0.4]].forEach(([freq, delay]) => {
         const osc  = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -366,22 +363,21 @@
   // ── Notificação nativa do navegador ───────────────────────────────────────
   function solicitarPermissao() {
     if (!('Notification' in window)) return;
-    if (Notification.permission !== 'default') return;
-    window.addEventListener('click', function handler() {
+    if (Notification.permission !== 'granted') {
       Notification.requestPermission();
-      window.removeEventListener('click', handler);
-    }, { once: true });
+    }
   }
 
   function notifyBrowser(maxId, pendentes) {
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
     try {
-      const n = new Notification('🍕 Pizza Food — Novo Pedido!', {
+      const n = new Notification('Novo pedido recebido!', {
         body    : `Pedido #${maxId} | Pendentes: ${pendentes}`,
         icon    : CONFIG.logoPath,
         tag     : 'pedido-novo',
         renotify: true,
+        silent  : true // O áudio é tocado via JS
       });
       n.onclick = () => {
         dispensarAlerta();
@@ -406,9 +402,7 @@
       if (msg.type === 'NEW_ORDER') {
         // Outra aba já disparou os alertas — apenas atualiza id e mostra aviso leve
         if (msg.maxId > getLastId()) setLastId(msg.maxId);
-        if (!estaNaPaginaDePedidos()) {
-          showTopMessage(msg.maxId, msg.pendentes);
-        }
+        showTopMessage(msg.maxId, msg.pendentes);
       }
 
       if (msg.type === 'DISPENSAR') {
@@ -423,17 +417,26 @@
   function checkNewOrders() {
     if (!window.app || !app.method || !app.method.get) return;
 
-    // // Se já estamos na página de pedidos, dispensa silenciosamente
-    // if (estaNaPaginaDePedidos() && _alertaAtivo) {
-    //   dispensarAlerta();
-    //   removerTopMessage();
-    // }
-
     app.method.get('/pedido/painel/1',
       (response) => {
         if (!response || response.status === 'error') return;
 
         const lista = Array.isArray(response.data) ? response.data : [];
+
+        // Primeira execução: apenas registra o estado atual sem notificar (evita spam no reload)
+        if (_firstPoll) {
+          _firstPoll = false;
+          let maxId = 0;
+          lista.forEach(p => {
+            const id = parseInt(p.idpedido, 10);
+            if (!isNaN(id) && id > maxId) maxId = id;
+          });
+          if (maxId > getLastId()) {
+            setLastId(maxId);
+          }
+          return;
+        }
+
         if (lista.length === 0) return;
 
         let maxId = 0;
@@ -445,12 +448,6 @@
 
         const lastId = getLastId();
 
-        // Primeira execução: apenas registra o estado atual sem notificar
-        if (lastId === 0) {
-          setLastId(maxId);
-          return;
-        }
-
         if (maxId > lastId) {
           if (!canAlertNow()) {
             setLastId(maxId);
@@ -458,9 +455,6 @@
           }
 
           setLastId(maxId);
-
-          // Não notifica se já está na página de pedidos
-          // if (estaNaPaginaDePedidos()) return;
 
           const pendentes = response.totais?.pendente ?? lista.length;
           const novos     = lista.filter(p => parseInt(p.idpedido, 10) > lastId);
@@ -529,5 +523,23 @@
       setTimeout(tryStart, 800);
     }
   }
+
+  // Hack silencioso de retaguarda: o primeiro clique na tela destrava o bip se o navegador tiver bloqueado o autoplay
+  window.addEventListener('click', function audioUnlock() {
+    try {
+      if (!_audioCtx) {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (_audioCtx.state === 'suspended') _audioCtx.resume();
+      const osc = _audioCtx.createOscillator();
+      const gain = _audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(_audioCtx.destination);
+      gain.gain.value = 0;
+      osc.start();
+      osc.stop(_audioCtx.currentTime + 0.01);
+    } catch (e) {}
+    window.removeEventListener('click', audioUnlock);
+  }, { once: true });
 
 })();

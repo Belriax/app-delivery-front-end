@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+
+  <title>Fidelização - Menu Creator</title>
+
+  <link rel="stylesheet" href="../css/bootstrap.min.css">
+  <link rel="stylesheet" href="../css/fontawesome.css">
+  <link rel="stylesheet" href="../css/animate.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="./css/painel.css">
+  <link rel="stylesheet" href="./css/fidelizacao.css">
+
+  <link rel="icon" href="../img/logo.ico" type="x-icon">
+  <link rel="shortcut icon" href="../img/logo.ico" type="x-icon">
+  <meta property="og:title" content="Cardápio Digital - Faça seu pedido!" />
+  <meta property="og:description" content="Acesse nosso cardápio digital, conheça nossos produtos e faça seu pedido online de forma rápida e prática." />
+  <meta property="og:image" content="https://menucreator.com.br/img/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cardápio Digital - Faça seu pedido!" />
+  <meta name="twitter:description" content="Acesse nosso cardápio digital, conheça nossos produtos e faça seu pedido online de forma rápida e prática." />
+  <meta name="twitter:image" content="https://menucreator.com.br/img/logo.png" />
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P70972ZVPQ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-P70972ZVPQ');
+  </script>
+</head>
+
+<body>
+
+  <!-- toast mensagens -->
+  <div class="container-mensagens" id="container-mensagens"></div>
+
+  <!-- loader-full -->
+  <div class="loader-full hidden">
+    <img src="../img/loader.png" width="100">
+  </div>
+
+  <section class="bg-menu">
+    <div class="menu-left">
+      <div class="logo">
+        <img class="logo-empresa" width="100" alt="logo-pizzaria">
+      </div>
+
+      <div class="menus">
+        <a href="./home.html" class="menu-item "><i class="fas fa-home"></i>&nbsp;Início</a>
+        <a href="./pedidos.html" class="menu-item "><i class="fas fa-utensils"></i>&nbsp;Pedidos</a>
+        <a href="./pdv.html" class="menu-item "><i class="fas fa-desktop"></i>&nbsp;PDV</a>
+        <a href="./cozinha.html" class="menu-item "><i class="fas fa-fire"></i>&nbsp;Cozinha</a>
+        <a href="./cardapio.html" class="menu-item "><i class="fas fa-book-open"></i>&nbsp;Cardápio</a>
+        <a href="./anuncios.html" class="menu-item "><i class="fas fa-bullhorn"></i>&nbsp;Anúncios</a>
+        <a href="./mesas.html" class="menu-item "><i class="fas fa-chair"></i>&nbsp;Mesas</a>
+        <a href="./garcons.html" class="menu-item "><i class="fas fa-concierge-bell"></i>&nbsp;Garçons</a>
+        <a href="./entregadores.html" class="menu-item "><i class="fas fa-motorcycle"></i>&nbsp;Entregadores</a>
+        <a href="./fidelizacao.html" class="menu-item active"><i class="fas fa-gift"></i>&nbsp;Fidelização</a>
+        <a href="./configuracoes.html" class="menu-item "><i class="fas fa-cog"></i>&nbsp;Configurações</a>
+        <a href="./empresa.html" class="menu-item "><i class="fas fa-building"></i>&nbsp;Empresa</a>
+        <a href="./relatorio.html" class="menu-item "><i class="fas fa-chart-line"></i>&nbsp;Relatório</a>
+      </div>
+    </div>
+
+    <div class="conteudo">
+
+      <div class="menu-top">
+        <div class="container">
+          <div class="row">
+            <div class="col-12 d-flex align-items-center mt-4">
+
+              <h1 class="title-page">
+                <b>
+                  <i class="fas fa-gift"></i>&nbsp; Fidelização
+                </b>
+              </h1>
+
+              <div class="container-right">
+                <button class="toggle-theme-btn" onclick="app.method.toggleSomGlobal()" style="margin-right: 15px;" id="btn-sound-toggle">
+                  <i class="fas fa-volume-up" id="sound-icon"></i> Som
+                </button>
+                <button class="toggle-theme-btn" onclick="app.method.toggleTemaGlobal()" style="margin-right: 15px;">
+                  <i class="fas fa-moon" id="theme-icon"></i> Tema
+                </button>
+                <div class="container-dados">
+                  <p class="nome-empresa"></p>
+                  <span class="email-empresa"></span>
+                </div>
+
+                <a href="#" class="btn btn-white btn-sm" onclick="app.method.logout()">
+                  <i class="fas fa-sign-out-alt"></i>&nbsp; Sair
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="conteudo-inner">
+        <div class="container">
+
+          <div class="row">
+
+            <div class="fidelizacao-hero animate__animated animate__fadeIn">
+              <div>
+                <span class="badge-fidelizacao">Clube de benefícios</span>
+                <h2>Crie cupons, pontos e recompensas para seus clientes</h2>
+                <p>
+                  Incentive novas compras, premie clientes fiéis e aumente a retenção do seu delivery.
+                </p>
+              </div>
+
+              <div class="hero-icon">
+                <i class="fas fa-award"></i>
+              </div>
+            </div>
+
+            <div class="row mt-4">
+
+              <div class="col-3">
+                <div class="card card-fidelizacao">
+                  <div class="card-icon orange">
+                    <i class="fas fa-ticket-alt"></i>
+                  </div>
+                  <small>Cupons ativos</small>
+                  <h3 id="lblCuponsAtivos">3</h3>
+                </div>
+              </div>
+
+              <div class="col-3">
+                <div class="card card-fidelizacao">
+                  <div class="card-icon yellow">
+                    <i class="fas fa-star"></i>
+                  </div>
+                  <small>Pontos gerados</small>
+                  <h3 id="lblPontosGerados">1.250</h3>
+                </div>
+              </div>
+
+              <div class="col-3">
+                <div class="card card-fidelizacao">
+                  <div class="card-icon green">
+                    <i class="fas fa-users"></i>
+                  </div>
+                  <small>Clientes cadastrados</small>
+                  <h3 id="lblClientesCadastrados">48</h3>
+                </div>
+              </div>
+
+              <div class="col-3">
+                <div class="card card-fidelizacao">
+                  <div class="card-icon blue">
+                    <i class="fas fa-coins"></i>
+                  </div>
+                  <small>Cashback gerado</small>
+                  <h3 id="lblCashbackGerado">R$ 96</h3>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="tabs-fidelizacao mt-4">
+              <button class="tab-fidelizacao active" data-tab="cupons">
+                <i class="fas fa-ticket-alt"></i> Cupons
+              </button>
+
+              <button class="tab-fidelizacao" data-tab="pontos">
+                <i class="fas fa-star"></i> Pontos
+              </button>
+
+              <button class="tab-fidelizacao" data-tab="cashback">
+                <i class="fas fa-coins"></i> Cashback
+              </button>
+
+              <button class="tab-fidelizacao" data-tab="clientes">
+                <i class="fas fa-users"></i> Clientes
+              </button>
+            </div>
+
+            <div class="tab-content-fidelizacao active" id="tab-cupons">
+
+              <div class="card card-area mt-4">
+
+                <div class="area-header">
+                  <div>
+                    <h5><b>Cupons promocionais</b></h5>
+                    <small>Crie descontos para clientes cadastrados.</small>
+                  </div>
+
+                  <button class="btn btn-yellow" data-bs-toggle="modal" data-bs-target="#modalCupom">
+                    <i class="fas fa-plus"></i>&nbsp; Novo cupom
+                  </button>
+                </div>
+
+                <div class="row mt-4" id="listaCupons"></div>
+
+              </div>
+
+            </div>
+
+            <div class="tab-content-fidelizacao" id="tab-pontos">
+
+              <div class="card card-area mt-4">
+
+                <div class="area-header">
+                  <div>
+                    <h5><b>Programa de pontos</b></h5>
+                    <small>Configure quantos pontos o cliente ganha por compra.</small>
+                  </div>
+                </div>
+
+                <div class="row mt-4">
+
+                  <div class="col-4">
+                    <label>Programa ativo?</label>
+                    <select id="pontosAtivo" class="form-control">
+                      <option value="true">Sim</option>
+                      <option value="false">Não</option>
+                    </select>
+                  </div>
+
+                  <div class="col-4">
+                    <label>Cada R$ 1 vale quantos pontos?</label>
+                    <input id="pontosPorReal" type="number" class="form-control" value="1">
+                  </div>
+
+                  <div class="col-4">
+                    <label>Validade dos pontos em dias</label>
+                    <input id="validadePontos" type="number" class="form-control" value="90">
+                  </div>
+
+                  <div class="col-4 mt-3">
+                    <label>Pontos para liberar desconto</label>
+                    <input id="pontosParaDesconto" type="number" class="form-control" value="100">
+                  </div>
+
+                  <div class="col-4 mt-3">
+                    <label>Valor do desconto</label>
+                    <input id="valorDescontoPontos" type="number" class="form-control" value="10">
+                  </div>
+
+                  <div class="col-4 mt-3 d-flex align-items-end">
+                    <button class="btn btn-yellow w-100" onclick="salvarConfiguracaoPontos()">
+                      <i class="fas fa-check"></i>&nbsp; Salvar pontos
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="tab-content-fidelizacao" id="tab-cashback">
+
+              <div class="card card-area mt-4">
+
+                <div class="area-header">
+                  <div>
+                    <h5><b>Cashback</b></h5>
+                    <small>Permita que o cliente receba parte do valor para usar depois.</small>
+                  </div>
+                </div>
+
+                <div class="row mt-4">
+
+                  <div class="col-4">
+                    <label>Cashback ativo?</label>
+                    <select id="cashbackAtivo" class="form-control">
+                      <option value="true">Sim</option>
+                      <option value="false">Não</option>
+                    </select>
+                  </div>
+
+                  <div class="col-4">
+                    <label>Percentual de cashback</label>
+                    <input id="percentualCashback" type="number" class="form-control" value="5">
+                  </div>
+
+                  <div class="col-4">
+                    <label>Validade em dias</label>
+                    <input id="validadeCashback" type="number" class="form-control" value="30">
+                  </div>
+
+                  <div class="col-12 mt-3">
+                    <button class="btn btn-yellow" onclick="salvarConfiguracaoCashback()">
+                      <i class="fas fa-check"></i>&nbsp; Salvar cashback
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="tab-content-fidelizacao" id="tab-clientes">
+
+              <div class="card card-area mt-4">
+
+                <div class="area-header">
+                  <div>
+                    <h5><b>Clientes fidelizados</b></h5>
+                    <small>Acompanhe pontos, cashback e uso de cupons.</small>
+                  </div>
+                </div>
+
+                <div class="table-responsive mt-4">
+                  <table class="table table-fidelizacao">
+                    <thead>
+                      <tr>
+                        <th>Cliente</th>
+                        <th>Telefone</th>
+                        <th>Pontos</th>
+                        <th>Cashback</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+
+                    <tbody id="listaClientes"></tbody>
+                  </table>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <div class="modal fade" id="modalCupom" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-cupom">
+      <div class="modal-content modal-cupom">
+
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <b>Novo cupom</b>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="form-group mb-3">
+            <label>Código do cupom</label>
+            <input id="txtCodigoCupom" type="text" class="form-control" placeholder="Ex: PIZZA10">
+          </div>
+
+          <div class="row">
+            <div class="col-6">
+              <label>Tipo</label>
+              <select id="tipoCupom" class="form-control">
+                <option value="percentual">Percentual</option>
+                <option value="fixo">Valor fixo</option>
+              </select>
+            </div>
+
+            <div class="col-6">
+              <label>Valor</label>
+              <input id="valorCupom" type="number" class="form-control" placeholder="10">
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-6">
+              <label>Pedido mínimo</label>
+              <input id="valorMinimoCupom" type="number" class="form-control" placeholder="50">
+            </div>
+
+            <div class="col-6">
+              <label>Validade</label>
+              <input id="validadeCupom" type="date" class="form-control">
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-6">
+              <label>Limite de uso</label>
+              <input id="limiteCupom" type="number" class="form-control" placeholder="100">
+            </div>
+
+            <div class="col-12 mt-3">
+
+              <div class="d-flex flex-wrap gap-4">
+
+                <!-- CLIENTE CADASTRADO -->
+                <div class="cupom-switch-cliente-novo">
+
+                  <label class="switch">
+
+                    <input
+                      id="clienteCadastradoCupom"
+                      type="checkbox"
+                      checked
+                    >
+
+                    <span class="slider round"></span>
+
+                    <span class="text">
+                      Apenas clientes cadastrados
+                    </span>
+
+                  </label>
+
+                </div>
+
+                <!-- NOVO CLIENTE -->
+                <div class="cupom-switch-cliente-novo">
+
+                  <label class="switch">
+
+                    <input
+                      id="clienteNovoCupom"
+                      type="checkbox"
+                    >
+
+                    <span class="slider round"></span>
+
+                    <span class="text">
+                      Somente novos clientes
+                    </span>
+
+                  </label>
+
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-white" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-yellow" onclick="criarCupom()">
+            <i class="fas fa-check"></i>&nbsp; Salvar cupom
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="../js/jquery.min.js"></script>
+  <script src="../js/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="../js/app.js"></script>
+  <script type="text/javascript" src="./js/notificacao.js"></script>
+  <script type="text/javascript" src="./js/fidelizacao.js"></script>
+
+</body>
+</html>

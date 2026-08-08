@@ -7,18 +7,19 @@
 }
 
 #content-print.print {
-  width: 200px !important;
-  max-width: 200px !important;
+  width: 250px !important;
+  max-width: 250px !important;
   /* font-family: 'Courier New', monospace !important; */
-  font-size: 9px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
   color: #000 !important;
   background: #fff !important;
-  padding: 2px !important;
+  padding: 4px 2px !important;
   box-sizing: border-box !important;
-  position: absolute;
-  left: -9999px;
-  top: 0;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  z-index: 999999 !important;
   overflow: hidden !important;
   font-weight: 600 !important;
 }
@@ -40,7 +41,7 @@
 }
 
 #content-print.print .cabecalho-impressao h2 {
-  font-size: 11px !important;
+  font-size: 17px !important;
   margin: 0 0 2px 0 !important;
   font-weight: bold !important;
   text-transform: uppercase;
@@ -48,7 +49,7 @@
 }
 
 #content-print.print .cabecalho-impressao p {
-  font-size: 8px !important;
+  font-size: 13px !important;
   margin: 1px 0 !important;
   line-height: 1.2 !important;
   color: #000 !important;
@@ -57,7 +58,7 @@
 }
 
 #content-print.print .cabecalho-impressao .titulo-pedido {
-  font-size: 9px !important;
+  font-size: 15px !important;
   font-weight: bold !important;
   margin-top: 3px !important;
 }
@@ -105,7 +106,7 @@
 #content-print.print .name,
 #content-print.print .text,
 #content-print.print .info-pedido {
-  font-size: 8px !important;
+  font-size: 13px !important;
   margin: 1px 0 !important;
   display: block !important;
   word-wrap: break-word !important;
@@ -115,7 +116,7 @@
 
 #content-print.print .name b {
   font-weight: bold !important;
-  font-size: 9px !important;
+  font-size: 14px !important;
 }
 
 #content-print.print .d-flex {
@@ -138,7 +139,7 @@
   display: block;
   text-align: center;
   font-weight: bold;
-  font-size: 9px;
+  font-size: 15px;
   margin-bottom: 4px;
   padding-bottom: 4px;
   border-bottom: 1px dashed #000;
@@ -174,7 +175,7 @@
 #content-print.print .info-item,
 #content-print.print .infos-produto {
   display: grid !important;
-  grid-template-columns: 1fr auto !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
   gap: 5px !important;
   align-items: start !important;
   margin: 0 !important;
@@ -264,7 +265,7 @@
 }
 
 #content-print.print .rodape-impressao p {
-  font-size: 8px !important;
+  font-size: 13px !important;
   margin: 1rem 0 !important;
   color: #000 !important;
   font-weight: 600 !important;
@@ -318,9 +319,136 @@
 }
 
 #content-print.print .card,
+#content-print.print .card-address,
+#content-print.print .container-dados-pedido,
 #content-print.print .container-itens-pedido,
 #content-print.print #itensPedido,
 #content-print.print hr {
-  border-top: none !important;
-  border-bottom: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+#content-print.print .container-itens-pedido::after,
+#content-print.print .container-itens-pedido::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* =========================================================
+   CLASSES DO NOVO TEMPLATE DE DETALHES DE PEDIDO (IMPRESSÃO)
+   ========================================================= */
+
+#content-print.print .pedido-detalhe-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 0 3px 0 !important;
+}
+
+#content-print.print .pedido-detalhe-produto {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 5px !important;
+  align-items: start !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+#content-print.print .pedido-detalhe-nome {
+  font-size: 13px !important;
+  font-weight: bold !important;
+  margin: 0 !important;
+  color: #000 !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  text-align: left !important;
+  grid-column: 1 !important;
+}
+
+#content-print.print .pedido-detalhe-nome i {
+  display: none !important;
+}
+
+#content-print.print .pedido-detalhe-nome b {
+  font-weight: bold !important;
+}
+
+#content-print.print .pedido-detalhe-preco {
+  font-size: 13px !important;
+  font-weight: bold !important;
+  margin: 0 !important;
+  color: #000 !important;
+  white-space: nowrap !important;
+  text-align: right !important;
+  grid-column: 2 !important;
+  min-width: 65px !important;
+}
+
+#content-print.print .pedido-detalhe-opcional {
+  margin-top: 2px !important;
+  padding: 0 0 0 5px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 5px !important;
+  grid-column: 1 / -1 !important;
+}
+
+#content-print.print .pedido-detalhe-opcional-nome {
+  font-size: 12px !important;
+  color: #000 !important;
+  text-align: left !important;
+  grid-column: 1 !important;
+  word-wrap: break-word !important;
+}
+
+#content-print.print .pedido-detalhe-opcional-preco {
+  font-size: 12px !important;
+  color: #000 !important;
+  text-align: right !important;
+  grid-column: 2 !important;
+  white-space: nowrap !important;
+  min-width: 65px !important;
+}
+
+#content-print.print .pedido-detalhe-obs {
+  margin-top: 2px !important;
+  padding: 0 0 0 5px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 12px !important;
+  color: #000 !important;
+  font-style: italic !important;
+  font-weight: 600 !important;
+  display: block !important;
+  word-wrap: break-word !important;
+  grid-column: 1 / -1 !important;
+}
+
+#content-print.print .pedido-detalhe-obs i {
+  display: none !important;
+}
+
+#content-print.print .pedido-detalhe-total-card {
+  background: transparent !important;
+  color: #000 !important;
+  border-top: 1px dashed #000 !important;
+  border-radius: 0 !important;
+  padding: 5px 0 0 0 !important;
+  margin: 5px 0 0 0 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 15px !important;
+  width: 100% !important;
+}
+
+#content-print.print .pedido-detalhe-total-card b {
+  font-size: 16px !important;
 }

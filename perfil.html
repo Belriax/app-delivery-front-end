@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <title>Meu Perfil</title>
+
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+  <link rel="stylesheet" href="./css/fontawesome.css">
+  <link rel="stylesheet" href="./css/animate.css">
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="./css/usuario-auth.css">
+
+  <link rel="icon" href="./img/logo.ico" type="x-icon">
+  <link rel="shortcut icon" href="./img/logo.ico" type="x-icon">
+  <meta property="og:title" content="Cardápio Digital - Faça seu pedido!" />
+  <meta property="og:description" content="Acesse nosso cardápio digital, conheça nossos produtos e faça seu pedido online de forma rápida e prática." />
+  <meta property="og:image" content="https://menucreator.com.br/img/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cardápio Digital - Faça seu pedido!" />
+  <meta name="twitter:description" content="Acesse nosso cardápio digital, conheça nossos produtos e faça seu pedido online de forma rápida e prática." />
+  <meta name="twitter:image" content="https://menucreator.com.br/img/logo.png" />
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P70972ZVPQ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-P70972ZVPQ');
+  </script>
+</head>
+
+<body>
+
+<section class="login">
+  <div class="card card-login animate__animated animate__fadeInUp">
+
+    <a href="./index.html" class="btn-voltar">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+
+    <!-- loader-full -->
+    <div class="loader-full hidden">
+      <img src="./img/loader.png" width="100">
+    </div>
+    
+
+    <img src="./img/logo.png" width="96" alt="Logo">
+
+    <h5 id="lblNomeCliente">Meu perfil</h5>
+    <p class="subtitle" id="lblTelefoneCliente"></p>
+
+    <div class="row mt-3">
+      <div class="col-6">
+        <div class="perfil-box">
+          <i class="fas fa-star"></i>
+          <small>Pontos</small>
+          <h4 id="lblPontosCliente">0</h4>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="perfil-box">
+          <i class="fas fa-coins"></i>
+          <small>Cashback</small>
+          <h4 id="lblCashbackCliente">R$ 0,00</h4>
+        </div>
+      </div>
+    </div>
+
+    <a href="./historico.html" class="btn btn-yellow btn-login mt-4">
+      <i class="fas fa-list-alt"></i> &nbsp; Meu histórico
+    </a>
+
+    <a href="#" id="btnSairCliente" class="link mt-3 d-block">
+      Sair da conta
+    </a>
+
+  </div>
+</section>
+
+<script src="./js/bootstrap.bundle.min.js"></script>
+<script src="./js/app.js"></script>
+<script src="./js/perfil.js"></script>
+
+
+</body>
+</html>

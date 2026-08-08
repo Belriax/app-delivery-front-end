@@ -9,6 +9,27 @@
   <link rel="stylesheet" href="./css/fontawesome.css">
   <link rel="stylesheet" href="./css/animate.css">
   <link rel="stylesheet" href="./css/main.css">
+
+  <link rel="icon" href="./img/logo.ico" type="x-icon">
+  <link rel="shortcut icon" href="./img/logo.ico" type="x-icon">
+  <meta property="og:title" content="Cardápio Digital - Faça seu pedido!" />
+  <meta property="og:description" content="Acesse nosso cardápio digital, conheça nossos produtos e faça seu pedido online de forma rápida e prática." />
+  <meta property="og:image" content="https://menucreator.com.br/img/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cardápio Digital - Faça seu pedido!" />
+  <meta name="twitter:description" content="Acesse nosso cardápio digital, conheça nossos produtos e faça seu pedido online de forma rápida e prática." />
+  <meta name="twitter:image" content="https://menucreator.com.br/img/logo.png" />
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P70972ZVPQ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-P70972ZVPQ');
+  </script>
 </head>
 <body>
 
@@ -51,6 +72,19 @@
 
   <section class="carrinho width-fix mt-4 hidden" id="carrinho-cheio">
     <div id="listaProdutos"></div>
+
+    <div class="card card-add-produto mb-2" onclick="carrinho.method.adicionarProdutoCarrinho()">
+      <div class="add-produto-row">
+        <div class="add-produto-icon">
+          <i class="fas fa-plus"></i>
+        </div>
+
+        <div class="add-produto-text">
+          <p class="mb-0"><b>Adicionar mais produtos</b></p>
+          <span>Voltar ao cardápio</span>
+        </div>
+      </div>
+    </div>
 
     <div class="card mb-2 hidden" id="containerTaxaEntrega">
       <div class="detalhes-produto">
@@ -190,7 +224,9 @@
 
   <div class="modal-actions hidden" id="modalActionsProduto">
     <div class="backdrop" onclick="carrinho.method.fecharModalActionsProduto()"></div>
+
     <div class="width-fix container-modal-actions">
+      <a href="#!" onclick="carrinho.method.abrirModalEditarProduto()">Editar pedido</a>
       <a href="#!" class="color-red" onclick="carrinho.method.removerProdutoCarrinho()">Remover</a>
     </div>
   </div>
@@ -312,6 +348,54 @@
     <div class="modal-actions hidden" id="modalActionsFormaPagamento">
       <div class="backdrop" onclick="carrinho.method.fecharModalActionsFormaPagamento()"></div>
       <div class="width-fix container-modal-actions"></div>
+    </div>
+
+    <div id="modalEditarProduto" class="modal fade modal-form" tabindex="-1" data-backdrop="static">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title"><b>Editar pedido</b></h5>
+
+            <button type="button" class="btn btn-white btn-sm" data-bs-dismiss="modal" aria-label="close">
+              <i class="fas fa-times"></i> Fechar
+            </button>
+          </div>
+
+          <div class="modal-body">
+
+            <div class="container-group mb-4">
+              <p class="title-categoria mb-0"><b>Produto</b></p>
+              <input type="text" id="txtEditarProdutoNome" class="form-control mt-2" disabled>
+            </div>
+
+            <div class="container-group mb-4">
+              <p class="title-categoria mb-0"><b>Quantidade</b></p>
+              <input type="number" id="txtEditarProdutoQuantidade" class="form-control mt-2" min="1">
+            </div>
+
+            <div class="container-group mb-4">
+              <p class="title-categoria mb-0"><b>Adicionais</b></p>
+              <div id="listaEditarProdutoOpcionais" class="mt-2"></div>
+            </div>
+
+            <div class="container-group mb-4">
+              <p class="title-categoria mb-0"><b>Observação</b></p>
+              <textarea id="txtEditarProdutoObservacao"
+                        class="form-control mt-2"
+                        rows="3"
+                        placeholder="Ex: sem cebola, ponto da carne..."></textarea>
+            </div>
+
+            <div class="footer-btn mt-3 mb-3" style="text-align: right;">
+              <a href="#!" class="btn btn-yellow btn-sm" onclick="carrinho.method.salvarEdicaoProdutoCarrinho()">
+                <i class="fas fa-check"></i>&nbsp; Salvar alterações
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </div>
   
 

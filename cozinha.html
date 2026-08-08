@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cozinha - Menu Creator</title>
+  <link rel="icon" href="../img/logo.ico" type="x-icon">
+
+  <link rel="stylesheet" href="../css/bootstrap.min.css">
+  <link rel="stylesheet" href="../css/fontawesome.css">
+  <link rel="stylesheet" href="../css/animate.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="./css/painel.css">
+  <style>
+    /* Cozinha Specific Styles */
+    body.dark-mode {
+      --color-background: #121212;
+      --painel-bg: #121212;
+      --color-black: #e0e0e0;
+      --color-white: #1e1e1e;
+      --color-text: #b0b0b0;
+      --color-secondary: #1a1a1a;
+      --painel-border: #333;
+      background-color: var(--color-background);
+      color: var(--color-text);
+    }
+
+    body.dark-mode .menu-top {
+      background: rgba(18, 18, 18, 0.86) !important;
+      border-bottom: 1px solid #333;
+    }
+
+    body.dark-mode .menu-left {
+      background: #161616 !important;
+      border-right: 1px solid #333 !important;
+    }
+
+    body.dark-mode .container-dados p {
+      color: #fff !important;
+    }
+
+    body.dark-mode .menu-item {
+      color: #b0b0b0 !important;
+    }
+
+    body.dark-mode .menu-item:hover,
+    body.dark-mode .menu-item.active {
+      color: #fff !important;
+    }
+
+    body.dark-mode .card-ticket {
+      background-color: #252525 !important;
+      border: 1px solid #444 !important;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    body.dark-mode .ticket-header {
+      background-color: #2c2c2c;
+      border-bottom: 1px solid #444;
+      color: #fff;
+    }
+
+    body.dark-mode .item-list li {
+      border-bottom: 1px solid #333;
+    }
+
+    body.dark-mode .title-page {
+      color: #fff;
+    }
+
+    .kds-container {
+      display: flex;
+      gap: 20px;
+      height: calc(100vh - 100px);
+      padding: 0 20px;
+    }
+
+    .kds-column {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    body.dark-mode .kds-column {
+      background: #1c1c1c !important;
+      border: 1px solid #333 !important;
+    }
+
+    .kds-column-header {
+      font-size: 20px;
+      font-weight: bold;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--color-primary);
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-ticket {
+      background: var(--color-white);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      margin-bottom: 15px;
+      overflow: hidden;
+      animation: fadeIn 0.5s;
+    }
+
+    .ticket-header {
+      padding: 10px 15px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ticket-header .order-number {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--color-primary);
+    }
+
+    .ticket-body {
+      padding: 15px;
+    }
+
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .item-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .item-list li:last-child {
+      border-bottom: none;
+    }
+
+    .item-qty {
+      font-weight: bold;
+      margin-right: 10px;
+      color: var(--color-primary);
+    }
+
+    .item-obs {
+      display: block;
+      color: var(--color-red);
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 4px;
+      margin-left: 25px;
+    }
+
+    .item-opcional {
+      display: block;
+      color: #666;
+      font-size: 13px;
+      margin-left: 25px;
+    }
+
+    body.dark-mode .item-opcional {
+      color: #999;
+    }
+
+    .ticket-footer {
+      padding: 10px 15px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .toggle-theme-btn {
+      background: none;
+      border: 1px solid var(--color-primary);
+      color: var(--color-primary);
+      padding: 5px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .toggle-theme-btn:hover {
+      background: var(--color-primary);
+      color: #fff;
+    }
+  </style>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P70972ZVPQ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-P70972ZVPQ');
+  </script>
+</head>
+<body class="cozinha-dark">
+
+  <div class="container-mensagens" id="container-mensagens"></div>
+
+  <!-- loader-full -->
+  <div class="loader-full hidden">
+    <img src="../img/loader.png" width="100">
+  </div>
+
+  <section class="bg-menu">
+    <div class="menu-left">
+      <div class="logo">
+        <img class="logo-empresa" width="100" alt="logo-pizzaria">
+      </div>
+
+      <div class="menus">
+        <a href="./home.html" class="menu-item "><i class="fas fa-home"></i>&nbsp;Início</a>
+        <a href="./pedidos.html" class="menu-item "><i class="fas fa-utensils"></i>&nbsp;Pedidos</a>
+        <a href="./pdv.html" class="menu-item "><i class="fas fa-desktop"></i>&nbsp;PDV</a>
+        <a href="./cozinha.html" class="menu-item active"><i class="fas fa-fire"></i>&nbsp;Cozinha</a>
+        <a href="./cardapio.html" class="menu-item "><i class="fas fa-book-open"></i>&nbsp;Cardápio</a>
+        <a href="./anuncios.html" class="menu-item "><i class="fas fa-bullhorn"></i>&nbsp;Anúncios</a>
+        <a href="./mesas.html" class="menu-item "><i class="fas fa-chair"></i>&nbsp;Mesas</a>
+        <a href="./garcons.html" class="menu-item "><i class="fas fa-concierge-bell"></i>&nbsp;Garçons</a>
+        <a href="./entregadores.html" class="menu-item "><i class="fas fa-motorcycle"></i>&nbsp;Entregadores</a>
+        <a href="./fidelizacao.html" class="menu-item "><i class="fas fa-gift"></i>&nbsp;Fidelização</a>
+        <a href="./configuracoes.html" class="menu-item "><i class="fas fa-cog"></i>&nbsp;Configurações</a>
+        <a href="./empresa.html" class="menu-item "><i class="fas fa-building"></i>&nbsp;Empresa</a>
+        <a href="./relatorio.html" class="menu-item "><i class="fas fa-chart-line"></i>&nbsp;Relatório</a>
+      </div>
+    </div>
+
+    <div class="conteudo">
+      <div class="menu-top" style="margin-bottom: 20px;">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-12 d-flex align-items-center mt-4 justify-content-between">
+              <h1 class="title-page mb-0">
+                <b><i class="fas fa-fire text-danger"></i>&nbsp; Tela da Cozinha</b>
+              </h1>
+
+              <div class="d-flex align-items-center gap-3">
+                <button class="toggle-theme-btn" onclick="app.method.toggleSomGlobal()" style="margin-right: 15px;" id="btn-sound-toggle">
+                  <i class="fas fa-volume-up" id="sound-icon"></i> Som
+                </button>
+                <button class="toggle-theme-btn" onclick="app.method.toggleTemaGlobal()">
+                  <i class="fas fa-moon" id="theme-icon"></i> Tema
+                </button>
+                <div class="container-dados">
+                  <p class="nome-empresa"></p>
+                  <span class="email-empresa"></span>
+                </div>
+                <a href="#" class="btn btn-white btn-sm" onclick="app.method.logout()">
+                  <i class="fas fa-sign-out-alt"></i>&nbsp; Sair
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="conteudo-inner">
+        <div class="kds-container">
+
+          <!-- Coluna Aceitos -->
+          <div class="kds-column" ondrop="cozinha.method.drop(event, 2)" ondragover="cozinha.method.allowDrop(event)">
+            <div class="kds-column-header text-warning">
+              <span>Novos (Aceitos)</span>
+              <span class="badge bg-warning text-dark" id="count-aceitos">0</span>
+            </div>
+            <div id="lista-aceitos">
+              <!-- Tickets Aceitos vão aqui -->
+            </div>
+          </div>
+
+          <!-- Coluna Preparo -->
+          <div class="kds-column" ondrop="cozinha.method.drop(event, 3)" ondragover="cozinha.method.allowDrop(event)">
+            <div class="kds-column-header text-info">
+              <span>Em Preparo</span>
+              <span class="badge bg-info text-white" id="count-preparo">0</span>
+            </div>
+            <div id="lista-preparo">
+              <!-- Tickets Em Preparo vão aqui -->
+            </div>
+          </div>
+
+          <!-- Coluna Prontos -->
+          <div class="kds-column" style="opacity: 0.85;" ondrop="cozinha.method.drop(event, 4)" ondragover="cozinha.method.allowDrop(event)">
+            <div class="kds-column-header text-success">
+              <span>Prontos (Hoje)</span>
+              <span class="badge bg-success text-white" id="count-prontos">0</span>
+            </div>
+            <div id="lista-prontos">
+              <!-- Tickets Prontos vão aqui -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Áudio para novo pedido -->
+  <audio id="audioNovoPedido" src="../audio/campainha.mp3"></audio>
+
+  <script type="text/javascript" src="../js/jquery.min.js"></script>
+  <script type="text/javascript" src="../js/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="../js/app.js"></script>
+  <script type="text/javascript" src="./js/cozinha.js"></script>
+
+</body>
+
+</html>

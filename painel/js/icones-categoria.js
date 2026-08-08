@@ -1,132 +1,49 @@
 const ICONES = [
-    {
-        name: 'hamburger',
-        icon: '<i class="fas fa-hamburger"></i>',
-        unicode: '&#xf805;'
-    },
-    {
-        name: 'utensils',
-        icon: '<i class="fas fa-utensils"></i>',
-        unicode: '&#xf2e7;'
-    },
-    {
-        name: 'stroopwafel',
-        icon: '<i class="fas fa-stroopwafel"></i>',
-        unicode: '&#xf551;'
-    },
-    {
-        name: 'seedling',
-        icon: '<i class="fas fa-seedling"></i>',
-        unicode: '&#xf4d8;'
-    },
-    {
-        name: 'pizza',
-        icon: '<i class="fas fa-pizza-slice"></i>',
-        unicode: '&#xf818;'
-    },
-    {
-        name: 'pepper-hot',
-        icon: '<i class="fas fa-pepper-hot"></i>',
-        unicode: '&#xf816;'
-    },
-    {
-        name: 'lemon',
-        icon: '<i class="fas fa-lemon"></i>',
-        unicode: '&#xf094;'
-    },
-    {
-        name: 'ice-cream',
-        icon: '<i class="fas fa-ice-cream"></i>',
-        unicode: '&#xf810;'
-    },
-    {
-        name: 'hotdog',
-        icon: '<i class="fas fa-hotdog"></i>',
-        unicode: '&#xf80f;'
-    },
-    {
-        name: 'fish',
-        icon: '<i class="fas fa-fish"></i>',
-        unicode: '&#xf578;'
-    },
-    {
-        name: 'egg',
-        icon: '<i class="fas fa-egg"></i>',
-        unicode: '&#xf7fb;'
-    },
-    {
-        name: 'drumstick-bite',
-        icon: '<i class="fas fa-drumstick-bite"></i>',
-        unicode: '&#xf6d7;'
-    },
-    {
-        name: 'cookie',
-        icon: '<i class="fas fa-cookie"></i>',
-        unicode: '&#xf563;'
-    },
-    {
-        name: 'cheese',
-        icon: '<i class="fas fa-cheese"></i>',
-        unicode: '&#xf7ef;'
-    },
-    {
-        name: 'carrot',
-        icon: '<i class="fas fa-carrot"></i>',
-        unicode: '&#xf787;'
-    },
-    {
-        name: 'candy-cane',
-        icon: '<i class="fas fa-candy-cane"></i>',
-        unicode: '&#xf786;'
-    },
-    {
-        name: 'bread-slice',
-        icon: '<i class="fas fa-bread-slice"></i>',
-        unicode: '&#xf7ec;'
-    },
-    {
-        name: 'bone',
-        icon: '<i class="fas fa-bone"></i>',
-        unicode: '&#xf5d7;'
-    },
-    {
-        name: 'bacon',
-        icon: '<i class="fas fa-bacon"></i>',
-        unicode: '&#xf7e5;'
-    },
-    {
-        name: 'apple-alt',
-        icon: '<i class="fas fa-apple-alt"></i>',
-        unicode: '&#xf5d1;'
-    },
-    {
-        name: 'wine',
-        icon: '<i class="fas fa-wine-bottle"></i>',
-        unicode: '&#xf72f;'
-    },
-    {
-        name: 'wine-glass',
-        icon: '<i class="fas fa-wine-glass-alt"></i>',
-        unicode: '&#xf5ce;'
-    },
-    {
-        name: 'cocktail',
-        icon: '<i class="fas fa-cocktail"></i>',
-        unicode: '&#xf561;'
-    },
-    {
-        name: 'coffee',
-        icon: '<i class="fas fa-coffee"></i>',
-        unicode: '&#xf0f4;'
-    },
-    {
-        name: 'mug',
-        icon: '<i class="fas fa-mug-hot"></i>',
-        unicode: '&#xf7b6;'
-    },
-    {
-        name: 'beer',
-        icon: '<i class="fas fa-beer"></i>',
-        unicode: '&#xf0fc;'
-    },
-]
+    { name: 'hamburger', icon: '<i class="fas fa-hamburger"></i>', unicode: '&#xf805;' },
+    { name: 'pizza', icon: '<i class="fas fa-pizza-slice"></i>', unicode: '&#xf818;' },
+    { name: 'hotdog', icon: '<i class="fas fa-hotdog"></i>', unicode: '&#xf80f;' },
+    { name: 'drumstick-bite', icon: '<i class="fas fa-drumstick-bite"></i>', unicode: '&#xf6d7;' },
+    { name: 'bacon', icon: '<i class="fas fa-bacon"></i>', unicode: '&#xf7e5;' },
+    { name: 'cheese', icon: '<i class="fas fa-cheese"></i>', unicode: '&#xf7ef;' },
+    { name: 'bread-slice', icon: '<i class="fas fa-bread-slice"></i>', unicode: '&#xf7ec;' },
+    { name: 'fish', icon: '<i class="fas fa-fish"></i>', unicode: '&#xf578;' },
+    { name: 'egg', icon: '<i class="fas fa-egg"></i>', unicode: '&#xf7fb;' },
+    { name: 'bone', icon: '<i class="fas fa-bone"></i>', unicode: '&#xf5d7;' },
+    { name: 'apple-alt', icon: '<i class="fas fa-apple-alt"></i>', unicode: '&#xf5d1;' },
+    { name: 'lemon', icon: '<i class="fas fa-lemon"></i>', unicode: '&#xf094;' },
+    { name: 'carrot', icon: '<i class="fas fa-carrot"></i>', unicode: '&#xf787;' },
+    { name: 'seedling', icon: '<i class="fas fa-seedling"></i>', unicode: '&#xf4d8;' },
+    { name: 'leaf', icon: '<i class="fas fa-leaf"></i>', unicode: '&#xf06c;' },
+    { name: 'pepper-hot', icon: '<i class="fas fa-pepper-hot"></i>', unicode: '&#xf816;' },
+    { name: 'ice-cream', icon: '<i class="fas fa-ice-cream"></i>', unicode: '&#xf810;' },
+    { name: 'cookie', icon: '<i class="fas fa-cookie"></i>', unicode: '&#xf563;' },
+    { name: 'cookie-bite', icon: '<i class="fas fa-cookie-bite"></i>', unicode: '&#xf564;' },
+    { name: 'stroopwafel', icon: '<i class="fas fa-stroopwafel"></i>', unicode: '&#xf551;' },
+    { name: 'candy-cane', icon: '<i class="fas fa-candy-cane"></i>', unicode: '&#xf786;' },
+    { name: 'birthday-cake', icon: '<i class="fas fa-birthday-cake"></i>', unicode: '&#xf1fd;' },
+    { name: 'beer', icon: '<i class="fas fa-beer"></i>', unicode: '&#xf0fc;' },
+    { name: 'wine', icon: '<i class="fas fa-wine-bottle"></i>', unicode: '&#xf72f;' },
+    { name: 'wine-glass', icon: '<i class="fas fa-wine-glass-alt"></i>', unicode: '&#xf5ce;' },
+    { name: 'cocktail', icon: '<i class="fas fa-cocktail"></i>', unicode: '&#xf561;' },
+    { name: 'glass-martini-alt', icon: '<i class="fas fa-glass-martini-alt"></i>', unicode: '&#xf57b;' },
+    { name: 'glass-cheers', icon: '<i class="fas fa-glass-cheers"></i>', unicode: '&#xf79f;' },
+    { name: 'glass-whiskey', icon: '<i class="fas fa-glass-whiskey"></i>', unicode: '&#xf7a0;' },
+    { name: 'coffee', icon: '<i class="fas fa-coffee"></i>', unicode: '&#xf0f4;' },
+    { name: 'mug', icon: '<i class="fas fa-mug-hot"></i>', unicode: '&#xf7b6;' },
+    { name: 'blender', icon: '<i class="fas fa-blender"></i>', unicode: '&#xf517;' },
+    { name: 'tint', icon: '<i class="fas fa-tint"></i>', unicode: '&#xf043;' },
+    { name: 'utensils', icon: '<i class="fas fa-utensils"></i>', unicode: '&#xf2e7;' },
+    { name: 'utensil-spoon', icon: '<i class="fas fa-utensil-spoon"></i>', unicode: '&#xf2e5;' },
+    { name: 'chart-pie', icon: '<i class="fas fa-chart-pie"></i>', unicode: '&#xf200;' },
+    { name: 'fire', icon: '<i class="fas fa-fire"></i>', unicode: '&#xf06d;' },
+    { name: 'fire-alt', icon: '<i class="fas fa-fire-alt"></i>', unicode: '&#xf7e4;' },
+    { name: 'snowflake', icon: '<i class="fas fa-snowflake"></i>', unicode: '&#xf2dc;' },
+    { name: 'shopping-basket', icon: '<i class="fas fa-shopping-basket"></i>', unicode: '&#xf291;' },
+    { name: 'shopping-bag', icon: '<i class="fas fa-shopping-bag"></i>', unicode: '&#xf290;' },
+    { name: 'box', icon: '<i class="fas fa-box"></i>', unicode: '&#xf466;' },
+    { name: 'box-open', icon: '<i class="fas fa-box-open"></i>', unicode: '&#xf49e;' },
+    { name: 'motorcycle', icon: '<i class="fas fa-motorcycle"></i>', unicode: '&#xf21c;' },
+    { name: 'star', icon: '<i class="fas fa-star"></i>', unicode: '&#xf005;' },
+    { name: 'tags', icon: '<i class="fas fa-tags"></i>', unicode: '&#xf02c;' },
+    { name: 'gift', icon: '<i class="fas fa-gift"></i>', unicode: '&#xf06b;' }
+];

@@ -1,0 +1,612 @@
+/* =========================
+   HERO
+========================= */
+
+.fidelizacao-hero {
+  background: linear-gradient(
+    135deg,
+    var(--color-secondary),
+    #fff8ef
+  );
+
+  border-radius: 22px;
+
+  padding: 22px 26px;
+
+  color: var(--color-black);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-left: 5px solid var(--color-primary);
+
+  box-shadow: 0 12px 30px rgba(0,0,0,.06);
+}
+
+.fidelizacao-hero h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 8px 0 5px;
+  color: var(--color-black);
+}
+
+.fidelizacao-hero p {
+  margin: 0;
+  max-width: 620px;
+
+  color: var(--color-text);
+
+  font-size: 13px;
+  line-height: 22px;
+}
+
+.badge-fidelizacao {
+  background: rgba(242,139,50,.12);
+
+  color: var(--color-primary);
+
+  padding: 6px 12px;
+
+  border-radius: 50px;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.hero-icon {
+  width: 58px;
+  height: 58px;
+
+  min-width: 58px;
+
+  border-radius: 16px;
+
+  background: #fff0df;
+
+  color: var(--color-primary);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 24px;
+}
+
+/* =========================
+   CARDS
+========================= */
+
+.card-fidelizacao,
+.card-area {
+  border: 0;
+  border-radius: 20px;
+  background: var(--color-white);
+
+  box-shadow: 0 10px 28px rgba(0,0,0,.05);
+}
+
+.card-fidelizacao {
+  padding: 20px;
+  min-height: 124px;
+
+  transition: all .2s ease;
+}
+
+.card-fidelizacao:hover {
+  transform: translateY(-3px);
+}
+
+.card-fidelizacao small {
+  display: block;
+
+  margin-top: 12px;
+
+  color: var(--color-text);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.card-fidelizacao h3 {
+  margin: 4px 0 0;
+
+  color: var(--color-black);
+
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.card-icon {
+  width: 46px;
+  height: 46px;
+
+  border-radius: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+}
+
+.card-icon.orange {
+  background: #fff0e6;
+  color: #f5822a;
+}
+
+.card-icon.yellow {
+  background: #fff7d8;
+  color: #d99b00;
+}
+
+.card-icon.green {
+  background: #e8f7ee;
+  color: #15924d;
+}
+
+.card-icon.blue {
+  background: #eaf1ff;
+  color: #2e6edb;
+}
+
+/* =========================
+   TABS
+========================= */
+
+.tabs-fidelizacao {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tab-fidelizacao {
+  border: 0;
+
+  background: var(--color-secondary);
+
+  color: var(--color-black);
+
+  padding: 11px 18px;
+
+  border-radius: 14px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,.05);
+
+  transition: all .2s ease;
+}
+
+.tab-fidelizacao:hover,
+.tab-fidelizacao.active {
+  background: var(--color-primary);
+  color: var(--color-black);
+}
+
+.tab-content-fidelizacao {
+  display: none;
+}
+
+.tab-content-fidelizacao.active {
+  display: block;
+}
+
+/* =========================
+   CARD ÁREA
+========================= */
+
+.card-area {
+  padding: 24px;
+}
+
+.area-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.area-header h5 {
+  margin: 0;
+
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.area-header small {
+  color: var(--color-text);
+
+  font-size: 12px;
+}
+
+/* =========================
+   CUPONS
+========================= */
+
+.cupom-card {
+  background: var(--color-white);
+
+  border: 1px solid #f2f2f2;
+
+  border-left: 5px solid var(--color-primary);
+
+  border-radius: 18px;
+
+  padding: 18px;
+
+  box-shadow: 0 8px 24px rgba(0,0,0,.04);
+
+  transition: all .2s ease;
+}
+
+.cupom-card:hover {
+  transform: translateY(-3px);
+}
+
+.cupom-code {
+  color: var(--color-black);
+
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.cupom-desc {
+  margin-top: 3px;
+
+  color: var(--color-text);
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cupom-status {
+  background: #f2f2f2;
+
+  padding: 5px 10px;
+
+  border-radius: 50px;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status-ativo {
+  background: #e8f7ee;
+  color: #15924d;
+}
+
+.cupom-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  margin-top: 14px;
+}
+
+.cupom-meta span {
+  background: #f8f8f8;
+
+  padding: 6px 10px;
+
+  border-radius: 50px;
+
+  color: #666;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cupom-actions {
+  display: flex;
+  gap: 8px;
+
+  margin-top: 16px;
+}
+
+/* =========================
+   TABELA
+========================= */
+
+.table-fidelizacao th {
+  color: #777;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.table-fidelizacao td {
+  vertical-align: middle;
+
+  font-size: 13px;
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal-cupom .modal-content {
+  background: var(--color-white) !important;
+
+  border: 0 !important;
+
+  border-radius: 24px !important;
+
+  overflow: hidden;
+
+  box-shadow: 0 25px 60px rgba(0,0,0,.16);
+}
+
+.modal-cupom .modal-header {
+  background: linear-gradient(
+    135deg,
+    var(--color-secondary),
+    #fff8ef
+  );
+
+  border-bottom: 1px solid #f2f2f2;
+
+  padding: 22px 24px;
+}
+
+.modal-cupom .modal-header::before {
+  display: none !important;
+}
+
+.modal-cupom .modal-title {
+  color: var(--color-black);
+
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.modal-cupom .modal-body {
+  padding: 24px;
+}
+
+.modal-cupom .modal-footer {
+  background: #fafafa;
+
+  border-top: 1px solid #f2f2f2;
+
+  padding: 18px 24px;
+}
+
+.modal-cupom label {
+  margin-bottom: 7px;
+
+  color: var(--color-black);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.modal-cupom .form-control,
+.modal-cupom .form-select {
+  height: 48px;
+
+  border: 0;
+
+  border-radius: 14px;
+
+  background: #f8f8f8;
+
+  box-shadow: inset 0 0 0 1px #ededed;
+
+  padding: 0 16px;
+
+  font-size: 13px;
+}
+
+.modal-cupom .form-control:focus,
+.modal-cupom .form-select:focus {
+  background: var(--color-white);
+
+  box-shadow: 0 0 0 4px rgba(242,139,50,.12);
+}
+
+.modal-cupom .btn {
+  min-height: 46px;
+
+  border-radius: 14px;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.modal-cupom .btn-close {
+  opacity: .6;
+}
+
+.modal-cupom .btn-close:hover {
+  opacity: 1;
+}
+
+/* =========================
+   SWITCHES
+========================= */
+
+.cupom-switch-cliente-novo {
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+}
+
+.cupom-switch-cliente-novo .switch {
+  margin-bottom: 0;
+}
+
+.cupom-switch-cliente-novo .text {
+  color: var(--color-text);
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* =========================
+   PADRONIZAÇÃO DAS ABAS
+========================= */
+
+.tab-content-fidelizacao {
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.tab-content-fidelizacao h5 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-black);
+}
+
+.tab-content-fidelizacao small {
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.tab-content-fidelizacao label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: var(--color-black);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tab-content-fidelizacao .form-control,
+.tab-content-fidelizacao .form-select {
+  height: 48px;
+
+  border: 0;
+
+  border-radius: 14px;
+
+  background: #f8f8f8;
+
+  box-shadow: inset 0 0 0 1px #ededed;
+
+  padding: 0 16px;
+
+  font-size: 13px;
+  color: var(--color-black);
+}
+
+.tab-content-fidelizacao .form-control:focus,
+.tab-content-fidelizacao .form-select:focus {
+  background: var(--color-white);
+
+  box-shadow: 0 0 0 4px rgba(242,139,50,.12);
+}
+
+.tab-content-fidelizacao .btn {
+  min-height: 46px;
+
+  border-radius: 14px;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tab-content-fidelizacao .table th {
+  font-size: 12px;
+  font-weight: 700;
+  color: #777;
+}
+
+.tab-content-fidelizacao .table td {
+  font-size: 13px;
+  color: var(--color-black);
+  vertical-align: middle;
+}
+
+.tab-content-fidelizacao .badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 50px;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media(max-width: 992px) {
+
+  .fidelizacao-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .tabs-fidelizacao {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .tab-fidelizacao {
+    white-space: nowrap;
+  }
+
+}
+
+/* =========================
+   DARK MODE OVERRIDES
+========================= */
+
+body.dark-mode .fidelizacao-hero {
+  background: linear-gradient(135deg, #1f1f1f, #151515);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .fidelizacao-hero h2,
+body.dark-mode .fidelizacao-hero p {
+  color: var(--painel-text);
+}
+
+body.dark-mode .hero-icon {
+  background: #252525;
+}
+
+body.dark-mode .card-icon.orange { background: #332211; }
+body.dark-mode .card-icon.yellow { background: #332a11; }
+body.dark-mode .card-icon.green  { background: #112b1a; }
+body.dark-mode .card-icon.blue   { background: #112233; }
+
+body.dark-mode .cupom-card {
+  background: var(--painel-card);
+  border-color: var(--painel-border);
+}
+
+body.dark-mode .cupom-code,
+body.dark-mode .cupom-desc {
+  color: var(--painel-text);
+}
+
+body.dark-mode .cupom-status,
+body.dark-mode .cupom-meta span {
+  background: #2a2a2a;
+  color: #bbb;
+}
+
+body.dark-mode .modal-cupom .modal-header {
+  background: var(--painel-card);
+  border-bottom-color: var(--painel-border);
+}
+
+body.dark-mode .modal-cupom .modal-footer {
+  background: var(--painel-bg);
+  border-top-color: var(--painel-border);
+}
+
+body.dark-mode .modal-cupom .form-control,
+body.dark-mode .modal-cupom .form-select,
+body.dark-mode .tab-content-fidelizacao .form-control,
+body.dark-mode .tab-content-fidelizacao .form-select {
+  background: #252525 !important;
+  box-shadow: none !important;
+  border: 1px solid #444 !important;
+  color: #e0e0e0 !important;
+}

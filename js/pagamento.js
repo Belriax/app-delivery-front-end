@@ -38,15 +38,15 @@ pagamento.method = {
       SUB_ORDER.cart.forEach((e, i) => {
         let subTotal = 0;
 
-        if(e.opcionais.length > 0){
+        if(e.opcionais && e.opcionais.length > 0){
           for (let index = 0; index < e.opcionais.length; index++){
             let element = e.opcionais[index];
-            subTotal += element.valoropcional * e.quantidade;
+            subTotal += parseFloat(element.valoropcional || 0);
           }
         }
 
-        subTotal += (e.quantidade * e.valor);
-        total += subTotal;
+        let valorProduto = parseFloat(e.valor || 0) * parseInt(e.quantidade || 1);
+        total += valorProduto + subTotal;
       });
 
       // validar taxa entrega
@@ -56,7 +56,7 @@ pagamento.method = {
     }
 
     TOTAL_CARRINHO = total;
-    document.getElementById('lblTotalCarrinho').innerText = `R$ ${(total).toFixed(2).replace('.', ',')}`;
+    document.getElementById('lblTotalCarrinho').innerText = `R$ ${(total).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     callback();    
 
   },
@@ -209,6 +209,22 @@ pagamento.method = {
           return;
         }
         
+        // GA4 Event: purchase (Pagamento Online)
+        if (typeof gtag === 'function' && SUB_ORDER) {
+          let eventItems = SUB_ORDER.cart.map(item => ({
+            item_id: item.idproduto,
+            item_name: item.nome,
+            price: item.valor,
+            quantity: item.quantidade
+          }));
+          gtag('event', 'purchase', {
+            transaction_id: SUB_ORDER.payment_created_id || response.id || 'N/A',
+            currency: 'BRL',
+            value: TOTAL_CARRINHO,
+            shipping: parseFloat(Number(SUB_ORDER.taxaentrega || 0).toFixed(2)),
+            items: eventItems
+          });
+        }
 
       },
       (error) => {
@@ -219,4 +235,3 @@ pagamento.method = {
 
   },
 }
-

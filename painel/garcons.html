@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garçons - Menu Creator</title>
+  <link rel="stylesheet" href="../css/bootstrap.min.css">
+  <link rel="stylesheet" href="../css/fontawesome.css">
+  <link rel="stylesheet" href="../css/animate.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="./css/painel.css">
+  <link rel="icon" href="../img/logo.ico" type="x-icon">
+  <link rel="shortcut icon" href="../img/logo.ico" type="x-icon">
+</head>
+<body>
+  <div class="container-mensagens" id="container-mensagens"></div>
+  <div class="loader-full hidden">
+    <img src="../img/loader.png" width="100">
+  </div>
+
+  <section class="bg-menu">
+    <div class="menu-left">
+      <div class="logo">
+        <img class="logo-empresa" width="100" alt="logo-pizzaria">
+      </div>
+            <div class="menus">
+        <a href="./home.html" class="menu-item "><i class="fas fa-home"></i>&nbsp;Início</a>
+        <a href="./pedidos.html" class="menu-item "><i class="fas fa-utensils"></i>&nbsp;Pedidos</a>
+        <a href="./pdv.html" class="menu-item "><i class="fas fa-desktop"></i>&nbsp;PDV</a>
+        <a href="./cozinha.html" class="menu-item "><i class="fas fa-fire"></i>&nbsp;Cozinha</a>
+        <a href="./cardapio.html" class="menu-item "><i class="fas fa-book-open"></i>&nbsp;Cardápio</a>
+        <a href="./anuncios.html" class="menu-item "><i class="fas fa-bullhorn"></i>&nbsp;Anúncios</a>
+        <a href="./mesas.html" class="menu-item "><i class="fas fa-chair"></i>&nbsp;Mesas</a>
+        <a href="./garcons.html" class="menu-item active"><i class="fas fa-concierge-bell"></i>&nbsp;Garçons</a>
+        <a href="./entregadores.html" class="menu-item "><i class="fas fa-motorcycle"></i>&nbsp;Entregadores</a>
+        <a href="./fidelizacao.html" class="menu-item "><i class="fas fa-gift"></i>&nbsp;Fidelização</a>
+        <a href="./configuracoes.html" class="menu-item "><i class="fas fa-cog"></i>&nbsp;Configurações</a>
+        <a href="./empresa.html" class="menu-item "><i class="fas fa-building"></i>&nbsp;Empresa</a>
+        <a href="./relatorio.html" class="menu-item "><i class="fas fa-chart-line"></i>&nbsp;Relatório</a>
+      </div>
+    </div>
+
+    <div class="conteudo">
+      <div class="menu-top">
+        <div class="container">
+          <div class="row">
+            <div class="col-12 d-flex align-items-center mt-4">
+              <h1 class="title-page"><b><i class="fas fa-concierge-bell"></i>&nbsp; Gestão de Garçons</b></h1>
+              <div class="container-right">
+                <button class="toggle-theme-btn" onclick="app.method.toggleTemaGlobal()" style="margin-right: 15px;">
+                  <i class="fas fa-moon" id="theme-icon"></i> Tema
+                </button>
+                <div class="container-dados">
+                  <p class="nome-empresa"></p>
+                  <span class="email-empresa"></span>
+                </div>
+                <a href="#" onclick="app.method.logout()" class="btn btn-white btn-sm"><i class="fas fa-sign-out-alt"></i>&nbsp; Sair</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container mt-4 mb-5">
+        <div class="card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">Lista de Garçons</h5>
+            <button class="btn btn-yellow btn-sm" onclick="garcons.method.abrirModalCadastro()"><i class="fas fa-plus"></i> Novo Garçom</button>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>E-mail</th>
+                  <th>Status</th>
+                  <th class="text-end" width="120">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="lista-garcons">
+                <!-- Preenchido via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal Cadastro/Edição -->
+  <div id="modalGarcom" class="modal fade modal-form" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-concierge-bell"></i>&nbsp; <b id="titleModalGarcom">Novo Garçom</b></h5>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="txtIdGarcom">
+          
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3">
+              <div class="form-group mt-2">
+                <p class="title-categoria mb-0"><b>Nome *</b></p>
+                <input type="text" id="txtNome" class="form-control" placeholder="Nome do garçom">
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 mb-3">
+              <div class="form-group mt-2">
+                <p class="title-categoria mb-0"><b>E-mail (Login) *</b></p>
+                <input type="email" id="txtEmail" class="form-control" placeholder="email@email.com">
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 mb-3">
+              <div class="form-group mt-2">
+                <p class="title-categoria mb-0"><b>Senha <span id="lblSenhaObg">*</span></b></p>
+                <input type="password" id="txtSenha" class="form-control" placeholder="Senha de acesso">
+                <small id="dicaSenha" class="text-muted d-none">Deixe em branco para manter a senha atual.</small>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 mb-3 d-flex align-items-center">
+              <div class="form-group mt-2 w-100">
+                <div class="form-check form-switch mt-4">
+                  <input class="form-check-input" type="checkbox" id="chkAtivo" checked>
+                  <label class="form-check-label" for="chkAtivo"><b>Ativo</b></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-white" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-yellow" onclick="garcons.method.salvarGarcom()"><i class="fas fa-save"></i>&nbsp; Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Remover -->
+  <div id="modalRemoverGarcom" class="modal fade modal-form" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-trash-alt"></i>&nbsp; <b>Remover Garçom</b>
+          </h5>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="txtIdGarcomRemover" />
+          <div class="row mb-5">
+            <div class="col-12">
+              <p>Deseja realmente <b>remover</b> o garçom selecionado?</p>
+            </div>
+          </div>
+          <div class="footer-btn">
+            <a href="#!" class="btn btn-red btn-sm me-3" onclick="garcons.method.removerGarcom()">
+              <i class="fas fa-trash-alt"></i>&nbsp; Remover
+            </a>
+            <a href="#!" class="btn btn-white btn-sm" data-bs-dismiss="modal" aria-label="Close">
+              <i class="fas fa-times"></i>&nbsp; Cancelar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="../js/jquery.min.js"></script>
+  <script type="text/javascript" src="../js/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="../js/app.js"></script>
+  <script type="text/javascript" src="./js/garcons.js"></script>
+
+</body>
+</html>

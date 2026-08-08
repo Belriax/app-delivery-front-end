@@ -1,3 +1,4 @@
+var OPCIONAIS_CACHE = []; var OPCIONAL_EDIT_ID = 0;
 $(document).ready(function () {
 	cardapio.event.init();
 });
@@ -59,6 +60,44 @@ cardapio.event = {
 };
 
 cardapio.method = {
+	toggleVariacoes: () => {
+		const isChecked = $('#chkProdutoVariacao').prop('checked');
+		if (isChecked) {
+		  $('#containerVariacoes').removeClass('hidden');
+		  $('#containerPrecoPadrao').addClass('hidden');
+		} else {
+		  $('#containerVariacoes').addClass('hidden');
+		  $('#containerPrecoPadrao').removeClass('hidden');
+		}
+	},
+
+	adicionarLinhaVariacao: (id = '', nome = '', valor = '') => {
+		let _id = id || new Date().getTime();
+		let valFormatado = valor ? parseFloat(valor).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '';
+		
+		let temp = `
+		  <div class="row linha-variacao mt-2 align-items-center" id="variacao-${_id}">
+			<div class="col-7 pe-1">
+			  <input type="text" class="form-control txtNomeVariacao" placeholder="Ex: Pizza G" value="${nome}" />
+			</div>
+			<div class="col-3 px-1">
+			  <input type="text" class="form-control money txtValorVariacao" placeholder="0,00" value="${valFormatado}" />
+			</div>
+			<div class="col-2 ps-1">
+			  <a href="#!" class="btn btn-red btn-sm w-100" onclick="cardapio.method.removerLinhaVariacao('${_id}')">
+				<i class="fas fa-trash-alt"></i>
+			  </a>
+			</div>
+		  </div>
+		`;
+		$('#listaVariacoesProduto').append(temp);
+		$('.money').mask('#.##0,00', { reverse: true });
+	},
+
+	removerLinhaVariacao: (id) => {
+		$(`#variacao-${id}`).remove();
+	},
+
 	// CATEGORIAS
 	// obtém a lista de categorias;
 	obterCategorias: () => {
@@ -267,12 +306,19 @@ cardapio.method = {
 					statusProduto = `<span class="badge bg-warning text-dark ms-2">Sem estoque</span>`;
 				}
 
+				let valorFormatado = '';
+				if (e.tem_variacao > 0 && e.valor_min_variacao) {
+				  valorFormatado = `<span style="font-size: 11px; color: #777; font-weight: normal; display: block; margin-bottom: -2px;">A partir de</span>R$ ${parseFloat(e.valor_min_variacao).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+				} else {
+				  valorFormatado = `R$ ${parseFloat(e.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+				}
+
 				let temp = cardapio.template.produto
 					.replace(/\${id}/g, e.idproduto)
 					.replace(/\${imagem}/g, imagem)
 					.replace(/\${nome}/g, e.nome)
 					.replace(/\${descricao}/g, e.descricao || '')
-					.replace(/\${preco}/g, parseFloat(e.valor).toFixed(2).replace('.', ','))
+					.replace(/\${preco}/g, valorFormatado)
 					.replace(/\${quantidade}/g, quantidadeProduto)
 					.replace(/\${status}/g, statusProduto)
 					.replace(/\${idcategoria}/g, idcategoria)
@@ -592,6 +638,10 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 		$('#txtDescricaoProduto').val('');
 		$('#chkProdutoAtivo').prop('checked', true);
 		cardapio.method.atualizarTextoStatusProduto();
+		
+		$('#chkProdutoVariacao').prop('checked', false);
+		cardapio.method.toggleVariacoes();
+		$('#listaVariacoesProduto').html('');
 
 		// abre modal
 		$('#modalProduto').modal({backdrop: 'static',});
@@ -628,11 +678,25 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 		if (produto.length > 0) {
 			// limpa os campos
 			$('#txtNomeProduto').val(produto[0].nome);
-			$('#txtPrecoProduto').val(parseFloat(produto[0].valor).toFixed(2).replace('.', ','));
+			$('#txtPrecoProduto').val(parseFloat(produto[0].valor).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
 			$('#txtQuantidadeProduto').val(produto[0].quantidade ?? 0);
 			$('#txtDescricaoProduto').val(produto[0].descricao);
 			$('#chkProdutoAtivo').prop('checked', Number(produto[0].ativo === 1));
 			cardapio.method.atualizarTextoStatusProduto();
+
+			$('#listaVariacoesProduto').html('');
+			$('#chkProdutoVariacao').prop('checked', false);
+			cardapio.method.toggleVariacoes();
+
+			app.method.get('/produto/variacoes/' + idproduto, (response) => {
+				if (response.status === 'success' && response.data.length > 0) {
+					$('#chkProdutoVariacao').prop('checked', true);
+					cardapio.method.toggleVariacoes();
+					response.data.forEach(v => {
+						cardapio.method.adicionarLinhaVariacao(v.idvariacao, v.nome, v.valor);
+					});
+				}
+			}, (err) => { console.log(err); }, true);
 
 			// abre a modal
 			$('#modalProduto').modal({backdrop: 'static'});
@@ -643,24 +707,52 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 	// método para confirmar o cadastro / edição do produto;
 	salvarProduto: () => {
 		let nome = $('#txtNomeProduto').val().trim();
-		let valor = parseFloat($('#txtPrecoProduto').val().replace(/\./g, '').replace(',', '.'));
 		let quantidade = parseInt($('#txtQuantidadeProduto').val());
 		let descricao = $('#txtDescricaoProduto').val().trim();
 		let ativo = $('#chkProdutoAtivo').prop('checked') ? 1 : 0;
+		let variacoes = [];
+		let isVariacaoAtiva = $('#chkProdutoVariacao').prop('checked');
+		let valor = 0;
 
 		if (nome.length <= 0) {
 			app.method.mensagem('Informe o nome do produto, por favor.');
 			return;
 		}
 
-		if (isNaN(valor) || valor <= 0) {
-			app.method.mensagem('Informe o valor do produto, por favor.');
-			return;
-		}
-
 		if (isNaN(quantidade) || quantidade < 0) {
 			app.method.mensagem('Informe uma quantidade válida.');
 			return;
+		}
+
+		if (isVariacaoAtiva) {
+			let linhas = $('.linha-variacao');
+			if (linhas.length <= 0) {
+				app.method.mensagem('Adicione pelo menos uma variação.');
+				return;
+			}
+			
+			let erroVariacao = false;
+			$.each(linhas, (i, e) => {
+				let nomeVar = $(e).find('.txtNomeVariacao').val().trim();
+				let valVar = parseFloat($(e).find('.txtValorVariacao').val().replace(/\./g, '').replace(',', '.'));
+				
+				if (nomeVar.length <= 0 || isNaN(valVar) || valVar <= 0) {
+					erroVariacao = true;
+				} else {
+					variacoes.push({ nome: nomeVar, valor: valVar, ativo: 1 });
+				}
+			});
+
+			if (erroVariacao) {
+				app.method.mensagem('Preencha corretamente os nomes e valores das variações.');
+				return;
+			}
+		} else {
+			valor = parseFloat($('#txtPrecoProduto').val().replace(/\./g, '').replace(',', '.'));
+			if (isNaN(valor) || valor <= 0) {
+				app.method.mensagem('Informe o valor do produto, por favor.');
+				return;
+			}
 		}
 
 		let dados = {
@@ -671,6 +763,7 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 			quantidade: quantidade,
 			ativo: ativo,
 			descricao: descricao,
+			variacoes: variacoes
 		};
 
 		app.method.loading(true);
@@ -902,6 +995,7 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 							return;
 					}
 
+					OPCIONAIS_CACHE = response.data;
 
 					cardapio.method.carregarOpcionaisProduto(response.data);
 					cardapio.method.carregarOpcionaisProdutoSimples(response.data);
@@ -967,7 +1061,7 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
           let valor = '';
 
           if(element.valoropcional > 0) {
-            valor = `+ R$ ${parseFloat(element.valoropcional).toFixed(2).replace('.', ',')}`
+            valor = `+ R$ ${parseFloat(element.valoropcional).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
           }
   
           itens += cardapio.template.opcionalItem.replace(/\${idopcionalitem}/g, element.idopcionalitem)
@@ -1001,12 +1095,13 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 				let valor = '';
 
 				if(e.valoropcional > 0) {
-					valor = `+ RS ${parseFloat(e.valoropcional).toFixed(2).replace('.', ',')}`;
+					valor = `+ RS ${parseFloat(e.valoropcional).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 				}
 				
 				let temp = cardapio.template.opcionalItemSimples.replace(/\${idopcionalitem}/g, e.idopcionalitem)
-					.replace(/\${nome}/g, e.nomeopcional,)
+					.replace(/\${nome}/g, e.nomeopcional)
 					.replace(/\${valor}/g, valor)
+					.replace(/\${idopcional}/g, e.idopcional);
 
 				$("#listaOpcionaisSimples").append(temp);
 			});
@@ -1058,14 +1153,21 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 
 	abrirModalAddOpcional: () => {
 		$("#modalOpcionaisProduto").modal('hide');
+		OPCIONAL_EDIT_ID = 0;
 
 		$("#container-chkOpcionalSimples").removeClass('hidden');
 		$("#container-chkSelecaoOpcoes").addClass('hidden');
 
 		$("#txtNomeSimples").val('');
 		$("#txtPrecoSimples").val('');
+		$("#txtDescricaoSimples").val('');
+		$("#txtImagemSimplesUrl").val('');
+		$("#fileImagemSimples").val(null);
+		$("#txtNomeSimples").removeAttr('data-idopcionalitem');
 
-		$("#txtTituloSecao").val('Deseja borda recheada?');
+		$("#rdoExibicaoLista").prop('checked', true);
+
+		$("#txtTitulosecao").val('Deseja borda recheada?');
 		$("#txtMinimoOpcao").val(0);
 		$("#txtMaximoOpcao").val(1);
 
@@ -1074,8 +1176,94 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 
 		$("#listaOpcoesSelecao").html('');
 
-		$("#chkOpcionalSimples").prop('checked', true);
-		$("#chkSelecaoOpcoes").prop('checked', false);
+		$("#chkOpcionalSimples").prop('checked', true).prop('disabled', false);
+		$("#chkSelecaoOpcoes").prop('checked', false).prop('disabled', false);
+
+		$("#modalAddOpcionalProduto").modal({ backdrop: 'static' });
+		$("#modalAddOpcionalProduto").modal('show');
+	},
+
+	converterImagemBase64: (input, targetId) => {
+		if (input.files && input.files[0]) {
+			let reader = new FileReader();
+			reader.onload = function(e) {
+				$("#" + targetId).val(e.target.result);
+			};
+			reader.readAsDataURL(input.files[0]);
+		}
+	},
+
+	abrirModalEditOpcional: (idopcional, tiposimples, idopcionalitem = null) => {
+		$("#modalOpcionaisProduto").modal('hide');
+		OPCIONAL_EDIT_ID = idopcional;
+		
+		let opcionais = OPCIONAIS_CACHE.filter(e => e.idopcional == idopcional);
+		if (opcionais.length === 0) return;
+
+		let opcionalGroup = opcionais[0];
+		
+		if (tiposimples == 1) {
+			let itemParaEditar = idopcionalitem ? opcionais.find(e => e.idopcionalitem == idopcionalitem) : opcionais[0];
+			if (!itemParaEditar) itemParaEditar = opcionais[0];
+
+			$("#container-chkOpcionalSimples").removeClass('hidden');
+			$("#container-chkSelecaoOpcoes").addClass('hidden');
+			$("#chkOpcionalSimples").prop('checked', true).prop('disabled', false).change();
+			$("#chkSelecaoOpcoes").prop('checked', false).prop('disabled', false);
+
+			$("#txtNomeSimples").val(itemParaEditar.nomeopcional);
+			$("#txtPrecoSimples").val(parseFloat(itemParaEditar.valoropcional || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+			$("#txtDescricaoSimples").val(itemParaEditar.descricao || '');
+			$("#txtImagemSimplesUrl").val(itemParaEditar.imagem ? 'data:image/loaded...' : '');
+			$("#txtNomeSimples").attr('data-idopcionalitem', itemParaEditar.idopcionalitem);
+			
+			if (itemParaEditar.exibicao == 2) {
+				$("#rdoExibicaoCards").prop('checked', true);
+			} else {
+				$("#rdoExibicaoLista").prop('checked', true);
+			}
+
+			if (itemParaEditar.exibir_home == 1) {
+				$("#chkExibirHome").prop('checked', true);
+			} else {
+				$("#chkExibirHome").prop('checked', false);
+			}
+
+		} else {
+			$("#container-chkOpcionalSimples").addClass('hidden');
+			$("#container-chkSelecaoOpcoes").removeClass('hidden');
+			$("#chkOpcionalSimples").prop('checked', false).prop('disabled', false);
+			$("#chkSelecaoOpcoes").prop('checked', true).prop('disabled', false).change();
+
+			$("#txtTitulosecao").val(opcionalGroup.titulo).keyup();
+			$("#txtMinimoOpcao").val(opcionalGroup.minimo).change();
+			$("#txtMaximoOpcao").val(opcionalGroup.maximo).change();
+			
+			if (opcionalGroup.exibicao == 2) {
+				$("#rdoExibicaoCards").prop('checked', true);
+			} else {
+				$("#rdoExibicaoLista").prop('checked', true);
+			}
+
+			if (opcionalGroup.exibir_home == 1) {
+				$("#chkExibirHome").prop('checked', true);
+			} else {
+				$("#chkExibirHome").prop('checked', false);
+			}
+
+			$("#listaOpcoesSelecao").html('');
+			opcionais.forEach(item => {
+				let id = item.idopcionalitem;
+				let temp = cardapio.template.opcaoSelecao.replace(/\${id}/g, id);
+				$("#listaOpcoesSelecao").append(temp);
+				
+				$("#txtNomeSimples-" + id).val(item.nomeopcional);
+				$("#txtPrecoSimples-" + id).val((item.valoropcional || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+				$("#txtDescricaoSimples-" + id).val(item.descricao || '');
+				$("#opcao-" + id).attr('data-idopcionalitem', id);
+			});
+			$(".money").mask('#.##0,00', { reverse: true });
+		}
 
 		$("#modalAddOpcionalProduto").modal({ backdrop: 'static' });
 		$("#modalAddOpcionalProduto").modal('show');
@@ -1085,11 +1273,16 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 
 		let simples = $("#chkOpcionalSimples").prop('checked');
 		let opcoes = $("#chkSelecaoOpcoes").prop('checked');
+		let exibicao = $("#rdoExibicaoCards").prop('checked') ? 2 : 1;
+		let exibirHome = $("#chkExibirHome").prop('checked') ? 1 : 0;
 
 		// salvar opcional simples;
 		if(simples){
 			let nomesimples = $("#txtNomeSimples").val().trim();
 			let precosimples = parseFloat($("#txtPrecoSimples").val().replace(/\./g, '').replace(',' , '.'));
+			let descricaosimples = $("#txtDescricaoSimples").val().trim();
+			let imagemsimples = $("#txtImagemSimplesUrl").val();
+			let idopcionalitem = $("#txtNomeSimples").attr('data-idopcionalitem') || 0;
 
 			if(nomesimples.length <= 0) {
 				app.method.mensagem('Informe o nome do opcional, por favor');
@@ -1102,10 +1295,16 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 			}
 
 			var dados = {
+				idopcional: OPCIONAL_EDIT_ID,
+				idopcionalitem: idopcionalitem,
 				nome: nomesimples,
 				valor: precosimples,
+				descricao: descricaosimples,
+				imagem: imagemsimples,
 				simples: true,
-				idproduto: PRODUTO_ID
+				idproduto: PRODUTO_ID,
+				exibicao: exibicao,
+				exibirHome: exibirHome
 			}
 
 			cardapio.method.salvarOpcionalProduto(dados);
@@ -1124,23 +1323,17 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 				return;
 			}
 
-			if (minimoOpcao.length <= 0) {
-				app.method.mensagem('Informe o mínimo, por favor.');
-			}
-
-			if (maximoOpcao.length <= 0){
-				app.method.mensagem('Informe o máximo, por favor.');
-			}
-
 			let _opcoes = [];
 			let continuar = true;
 
 			document.querySelectorAll('#listaOpcoesSelecao .linha').forEach((e, i) => {
 				let _id = e.id.split('-')[1];
-
 				
 				let nomesimples = $("#txtNomeSimples-" + _id).val().trim();
 				let precosimples = parseFloat($("#txtPrecoSimples-" + _id).val().replace(/\./g, '').replace(',' , '.'));
+				let descricaosimples = $("#txtDescricaoSimples-" + _id).val().trim();
+				let imagemsimples = $("#txtImagemSimplesUrl-" + _id).val();
+				let idopcionalitem = $(e).attr('data-idopcionalitem') || 0;
 			
 				if(nomesimples.length <= 0) {
 					continuar = false;
@@ -1151,8 +1344,11 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 				}
 
 				_opcoes.push({
+					idopcionalitem: idopcionalitem,
 					nome: nomesimples,
 					valor: precosimples,
+					descricao: descricaosimples,
+					imagem: imagemsimples
 				})
 			})
 
@@ -1167,12 +1363,15 @@ atualizarBadgeOpcionaisDOM: (idproduto, quantidade) => {
 			}
 
 			var dados = {
+				idopcional: OPCIONAL_EDIT_ID,
 				titulo: titulosecao,
 				minimoOpcao: minimoOpcao,
 				maximoOpcao: maximoOpcao,
 				simples: false,
 				idproduto: PRODUTO_ID,
 				lista: _opcoes,
+				exibicao: exibicao,
+				exibirHome: exibirHome
 			}
 
 			cardapio.method.salvarOpcionalProduto(dados);
@@ -1373,7 +1572,7 @@ cardapio.template = {
 				<div class="infos-produto">
 					<p class="name"><b>\${nome}</b> \${status}</p>
 					<p class="description">\${descricao}</p>
-					<p class="price"><b>R$ \${preco}</b></p>
+					<p class="price"><b>\${preco}</b></p>
 					<p class="description"><b>Quantidade: </b> \${quantidade}</p>
 				</div>
 				<div class="actions">
@@ -1413,6 +1612,9 @@ cardapio.template = {
       </div>
       <div class="checks">
 				<div class="actions">
+					<a href="#!" class="icon-action" data-toggle="tooltip" data-placement="top" title="Editar" onclick="cardapio.method.abrirModalEditOpcional('\${idopcional}', 0)">
+						<i class="fas fa-edit"></i>
+					</a>
 					<a href="#!" class="icon-action" data-toggle="tooltip" data-placement="top" title="Remover" onclick="cardapio.method.abrirModalRemoverOpcionalItem('\${idopcionalitem}')" data-bs-original-title="Remover">
 						<i class="fas fa-trash-alt"></i>
 					</a>
@@ -1429,6 +1631,9 @@ cardapio.template = {
       </div>
       <div class="checks">
         <div class="actions">
+					<a href="#!" class="icon-action" data-toggle="tooltip" data-placement="top" title="Editar" onclick="cardapio.method.abrirModalEditOpcional('\${idopcional}', 1, '\${idopcionalitem}')">
+						<i class="fas fa-edit"></i>
+					</a>
 					<a href="#!" class="icon-action" data-toggle="tooltip" data-placement="top" title="Remover" onclick="cardapio.method.abrirModalRemoverOpcionalItem('\${idopcionalitem}')" data-bs-original-title="Remover">
 						<i class="fas fa-trash-alt"></i>
 					</a>
@@ -1447,8 +1652,8 @@ cardapio.template = {
 	`,
 
 	opcaoSelecao: `
-		<div class="row linha mt-4" id="opcao-\${id}">
-			<div class="col-8">
+		<div class="row linha mt-4" id="opcao-\${id}" data-idopcionalitem="">
+			<div class="col-5">
 				<div class="form-group">
 					<p class="title-categoria mb-0"><b>Nome:</b></p>
 					<input id="txtNomeSimples-\${id}" type="text" class="form-control" placeholder="Ex: Bacon" />
@@ -1460,11 +1665,25 @@ cardapio.template = {
 					<input id="txtPrecoSimples-\${id}" type="text" class="form-control money" placeholder="0,00" />
 				</div>
 			</div>
+			<div class="col-3">
+				<div class="form-group">
+					<p class="title-categoria mb-0"><b>Imagem:</b></p>
+					<input id="fileImagemSimples-\${id}" type="file" accept="image/*" class="form-control" onchange="cardapio.method.converterImagemBase64(this, 'txtImagemSimplesUrl-\${id}')" />
+					<input type="hidden" id="txtImagemSimplesUrl-\${id}" />
+				</div>
+			</div>
 			<div class="col-1">
 				<a href="#!" class="btn btn-red btn-sm mt-4" onclick="cardapio.method.removerLinhaOpcao('\${id}')">
 					<i class="fas fa-trash-alt"></i>
 				</a>
 			</div>
+			<div class="col-11 mt-2 mb-3">
+				<div class="form-group">
+					<p class="title-categoria mb-0"><b>Descrição:</b></p>
+					<input id="txtDescricaoSimples-\${id}" type="text" class="form-control" placeholder="Detalhes (opcional)" />
+				</div>
+			</div>
+			<div class="col-12"><hr></div>
 		</div>		
 	`,
 

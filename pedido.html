@@ -4,12 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Menu Creator - Pedido</title>
-  <link rel="icon" href="./img/logo.ico" type="x-icon">
-
   <link rel="stylesheet" href="./css/bootstrap.min.css">
   <link rel="stylesheet" href="./css/fontawesome.css">
   <link rel="stylesheet" href="./css/animate.css">
   <link rel="stylesheet" href="./css/main.css">
+
+  <link rel="icon" href="./img/logo.ico" type="x-icon">
+  <link rel="shortcut icon" href="./img/logo.ico" type="x-icon">
+  <meta property="og:title" content="Cardápio Digital - Faça seu pedido!" />
+  <meta property="og:description" content="Acesse nosso cardápio digital, conheça nossos produtos e faça seu pedido online de forma rápida e prática." />
+  <meta property="og:image" content="https://menucreator.com.br/img/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cardápio Digital - Faça seu pedido!" />
+  <meta name="twitter:description" content="Acesse nosso cardápio digital, conheça nossos produtos e faça seu pedido online de forma rápida e prática." />
+  <meta name="twitter:image" content="https://menucreator.com.br/img/logo.png" />
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P70972ZVPQ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-P70972ZVPQ');
+  </script>
 </head>
 <body>
   <!-- loader-full -->
@@ -50,18 +69,38 @@
   
 
 
-  <section class="menu-bottom hidden" id="menu-bottom">
+   <section class="menu-bottom" id="menu-bottom">
+
+    <!-- CARDÁPIO -->
     <a href="./index.html" class="menu-bottom-item">
-      <i class="fas fa-book-open"></i>&nbsp; Cardápio
+      <i class="fas fa-book-open"></i><br>
+      <small>Cardápio</small>
     </a>
+
+    <!-- PEDIDO -->
     <a href="./pedido.html" class="menu-bottom-item active">
-      <i class="fas fa-utensils"></i>&nbsp; Pedido
+      <i class="fas fa-utensils"></i><br>
+      <small>Pedido</small>
     </a>
+
+    <!-- CARRINHO -->
     <a href="./carrinho.html" class="menu-bottom-item">
-      <span id="icone-carrinho-vazio" class="hidden"><i class="fas fa-shopping-cart"></i></span>
+      <span id="icone-carrinho-vazio">
+        <i class="fas fa-shopping-cart"></i>
+      </span>
+
       <span id="total-carrinho" class="badge-total-carrinho hidden"></span>
-      &nbsp;Carrinho
+      <br>
+
+      <small>Carrinho</small>
     </a>
+
+    <!-- PERFIL / LOGIN -->
+    <a href="./login.html" class="menu-bottom-item">
+      <i class="fas fa-user-circle"></i><br>
+      <small>Perfil</small>
+    </a>
+
   </section>
 
   <section class="menu-bottom disabled hidden" id="menu-bottom-closed">

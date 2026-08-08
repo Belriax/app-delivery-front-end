@@ -7,6 +7,13 @@ var config = {};
 var TAXA_UNICA_ID = 0;
 var TAXA_DISTANCIA_SELECIONADA = 0;
 
+var MAPA_RAIO_ENTREGA = null;
+var CIRCULO_RAIO_ENTREGA = null;
+var MARCADOR_EMPRESA = null;
+
+var LAT_EMPRESA = null;
+var LNG_EMPRESA = null;
+
 config.event = {
   init: () => {
     app.method.validaToken();
@@ -40,9 +47,100 @@ config.method = {
         config.method.obterConfigFormaPagamento();
         break;
 
+      case 'integracao-whatsapp':
+        config.method.verificarStatusWhatsapp();
+      break;
+
       default:
         break;
     }
+  },
+
+  // INTEGRAÇÃO WHATSAPP
+  whatsappInterval: null,
+
+  verificarStatusWhatsapp: () => {
+    app.method.get('/whatsapp/status', (response) => {
+      if (response.status === 'success') {
+        const state = response.data;
+        const lbl = document.querySelector('#lblWhatsappStatus');
+        const btnStart = document.querySelector('#btnWhatsappStart');
+        const btnDisconnect = document.querySelector('#btnWhatsappDisconnect');
+        const qrContainer = document.querySelector('#container-whatsapp-qr');
+        const qrImg = document.querySelector('#imgWhatsappQr');
+
+        if (state.status === 'CONNECTED') {
+          lbl.innerHTML = '<b class="color-primary">Conectado</b>';
+          btnStart.classList.add('hidden');
+          btnDisconnect.classList.remove('hidden');
+          qrContainer.classList.add('hidden');
+          if(config.method.whatsappInterval) clearInterval(config.method.whatsappInterval);
+        } else if (state.status === 'QR_CODE_READY') {
+          lbl.innerHTML = '<b>Aguardando leitura do QR Code...</b>';
+          btnStart.classList.add('hidden');
+          btnDisconnect.classList.remove('hidden');
+          if (state.qr) {
+            qrImg.src = state.qr;
+            qrContainer.classList.remove('hidden');
+          }
+          // Poll every 3 seconds to check if authenticated
+          if (!config.method.whatsappInterval) {
+            config.method.whatsappInterval = setInterval(config.method.verificarStatusWhatsapp, 3000);
+          }
+        } else if (state.status === 'INITIALIZING') {
+          lbl.innerHTML = '<b>Iniciando servidor... Aguarde.</b>';
+          btnStart.classList.add('hidden');
+          btnDisconnect.classList.add('hidden');
+          qrContainer.classList.add('hidden');
+          if (!config.method.whatsappInterval) {
+            config.method.whatsappInterval = setInterval(config.method.verificarStatusWhatsapp, 3000);
+          }
+        } else {
+          lbl.innerHTML = '<b class="color-red">Desconectado</b>';
+          btnStart.classList.remove('hidden');
+          btnDisconnect.classList.add('hidden');
+          qrContainer.classList.add('hidden');
+          if(config.method.whatsappInterval) {
+            clearInterval(config.method.whatsappInterval);
+            config.method.whatsappInterval = null;
+          }
+        }
+      }
+    }, (error) => {
+      console.log("Erro ao verificar whatsapp", error);
+    });
+  },
+
+  iniciarWhatsapp: () => {
+    app.method.loading(true);
+    app.method.post('/whatsapp/start', '', (response) => {
+      app.method.loading(false);
+      if (response.status === 'success') {
+        app.method.mensagem(response.message, 'green');
+        config.method.verificarStatusWhatsapp();
+      } else {
+        app.method.mensagem(response.message);
+      }
+    }, (error) => {
+      app.method.loading(false);
+      console.log('Erro ao iniciar whatsapp', error);
+    });
+  },
+
+  desconectarWhatsapp: () => {
+    app.method.loading(true);
+    app.method.post('/whatsapp/disconnect', '', (response) => {
+      app.method.loading(false);
+      if (response.status === 'success') {
+        app.method.mensagem(response.message, 'green');
+        config.method.verificarStatusWhatsapp();
+      } else {
+        app.method.mensagem(response.message);
+      }
+    }, (error) => {
+      app.method.loading(false);
+      console.log('Erro ao desconectar whatsapp', error);
+    });
   },
 
   // TAB DELIVERY E RETIRADA
@@ -350,6 +448,7 @@ config.method = {
         } else {
           document.querySelector('#container-taxa-distancia').classList.remove('hidden');
           config.method.listaTaxaDistancia();
+          config.method.obterRaioEntrega()
         }
 
       },
@@ -435,7 +534,7 @@ config.method = {
         if(response.data.length > 0) {
           TAXA_UNICA_ID = response.data[0].idtaxaentrega;
 
-          document.querySelector('#txtTaxaUnicaValor').value = (response.data[0].valor).toFixed(2).toString().replace('.', ',');
+          document.querySelector('#txtTaxaUnicaValor').value = (parseInt(response.data[0].valor)).toFixed(2).toString().replace('.', ',');
           document.querySelector('#txtTaxaUnicaValorTempoMinimoEntrega').value = response.data[0].tempominimo;
           document.querySelector('#txtTaxaUnicaValorTempoMaximoEntrega').value = response.data[0].tempomaximo;
         }
@@ -526,8 +625,8 @@ config.method = {
         let tempo = '';
         let status = '<span class="badge badge-success">Ativado</span>';
         let acoes = `
-          <a class="dropdown-item" href="#" onclick="config.method.ativarTaxaDistancia('${e.idtaxaentrega}', 0)">
-            <i class="fas fa-ban"></i>&nbsp; <b>Desativar</b>
+          <a class="btn btn-sm btn-white" href="#" onclick="config.method.ativarTaxaDistancia('${e.idtaxaentrega}', 0)" title="Desativar" style="margin-right: 5px;">
+            <i class="fas fa-ban"></i>
           </a>
         `;
 
@@ -538,15 +637,15 @@ config.method = {
         if(e.ativo === 0){
           status = '<span class="badge badge-danger">Desativado</span>';
           acoes = `
-            <a class="dropdown-item" href="#" onclick="config.method.ativarTaxaDistancia('${e.idtaxaentrega}', 1)">
-              <i class="fas fa-check"></i>&nbsp; <b>Ativar</b>
+            <a class="btn btn-sm btn-white" href="#" onclick="config.method.ativarTaxaDistancia('${e.idtaxaentrega}', 1)" title="Ativar" style="margin-right: 5px;">
+              <i class="fas fa-check"></i>
             </a>
         `;
         }
 
         let temp = config.template.taxadistancia.replace(/\${idtaxaentrega}/g, e.idtaxaentrega)
         .replace(/\${distancia}/g, `${e.distancia} km`)
-        .replace(/\${valor}/g, `R$ ${(e.valor).toFixed(2).replace('.', ',')}`)
+        .replace(/\${valor}/g, `R$ ${parseInt(e.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`)
         .replace(/\${tempo}/g, tempo)
         .replace(/\${status}/g, status)
         .replace(/\${acoes}/g, acoes)
@@ -562,7 +661,6 @@ config.method = {
       `;
     }
   },
-
   ativarTaxaDistancia: (idtaxaentrega, ativar) => {
     app.method.loading(true);
 
@@ -580,7 +678,7 @@ config.method = {
           return;
         }
 
-        app.method.mensagem(response.message, 'green');
+        app.method.mensagem(response.message, ativar == 1 ? 'green' : 'red');
         
         config.method.listaTaxaDistancia();
       },
@@ -670,6 +768,7 @@ config.method = {
         app.method.mensagem(response.message, 'green');
 
         config.method.listaTaxaDistancia();
+        config.method.obterRaioEntrega();
       },
       (error) => {
         app.method.loading(false);
@@ -682,6 +781,173 @@ config.method = {
     TAXA_DISTANCIA_SELECIONADA = idtaxaentrega;
 
     $("#modalRemoverTaxaDistancia").modal('show');
+  },
+
+    iniciarMapaRaioEntrega: () => {
+    if (typeof L === 'undefined') {
+      app.method.mensagem('Leaflet não carregou.');
+      return;
+    }
+
+    if (
+      LAT_EMPRESA == null ||
+      LNG_EMPRESA == null ||
+      isNaN(LAT_EMPRESA) ||
+      isNaN(LNG_EMPRESA)
+    ) {
+      app.method.mensagem('Coordenadas da empresa não encontradas.');
+      return;
+    }
+
+    let raio = parseFloat(document.querySelector('#txtRaioMaximoEntrega').value);
+
+    if (isNaN(raio) || raio <= 0) {
+      raio = 5;
+    }
+
+    if (MAPA_RAIO_ENTREGA == null) {
+      MAPA_RAIO_ENTREGA = L.map('mapaRaioEntrega').setView([LAT_EMPRESA, LNG_EMPRESA], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(MAPA_RAIO_ENTREGA);
+
+      MARCADOR_EMPRESA = L.marker([LAT_EMPRESA, LNG_EMPRESA]).addTo(MAPA_RAIO_ENTREGA);
+      MARCADOR_EMPRESA.bindPopup('Sua empresa');
+    } else {
+      MAPA_RAIO_ENTREGA.setView([LAT_EMPRESA, LNG_EMPRESA], 13);
+
+      if (CIRCULO_RAIO_ENTREGA != null) {
+        MAPA_RAIO_ENTREGA.removeLayer(CIRCULO_RAIO_ENTREGA);
+      }
+
+      if (MARCADOR_EMPRESA != null) {
+        MAPA_RAIO_ENTREGA.removeLayer(MARCADOR_EMPRESA);
+      }
+
+      MARCADOR_EMPRESA = L.marker([LAT_EMPRESA, LNG_EMPRESA]).addTo(MAPA_RAIO_ENTREGA);
+      MARCADOR_EMPRESA.bindPopup('Sua empresa');
+    }
+
+    CIRCULO_RAIO_ENTREGA = L.circle([LAT_EMPRESA, LNG_EMPRESA], {
+      radius: raio * 1000,
+      fillOpacity: 0.2
+    }).addTo(MAPA_RAIO_ENTREGA);
+
+    MAPA_RAIO_ENTREGA.fitBounds(CIRCULO_RAIO_ENTREGA.getBounds());
+
+    setTimeout(() => {
+      MAPA_RAIO_ENTREGA.invalidateSize();
+    }, 300);
+  },
+
+  atualizarRaioMapa: () => {
+
+    let raio = parseFloat(
+      document.querySelector('#txtRaioMaximoEntrega').value
+    );
+
+    if (isNaN(raio) || raio <= 0) {
+      document.querySelector('#lblRaioAtual').innerText =
+        'Raio atual: -';
+      return;
+    }
+
+    document.querySelector('#lblRaioAtual').innerText =
+      `Raio atual: ${raio} km`;
+
+    if (CIRCULO_RAIO_ENTREGA != null) {
+
+      CIRCULO_RAIO_ENTREGA.setRadius(
+        raio * 1000
+      );
+
+      MAPA_RAIO_ENTREGA.fitBounds(
+        CIRCULO_RAIO_ENTREGA.getBounds()
+      );
+    }
+  },
+
+
+  obterRaioEntrega: () => {
+    app.method.loading(true);
+
+    app.method.get('/entrega/raio',
+      (response) => {
+        app.method.loading(false);
+
+        if (response.status == "error") {
+          app.method.mensagem(response.message);
+          return;
+        }
+
+        let data = response.data;
+
+        if (Array.isArray(data)) {
+          data = data.length > 0 ? data[0] : null;
+        }
+
+        if (!data) {
+          document.querySelector('#lblRaioAtual').innerText = 'Raio atual: -';
+          return;
+        }
+
+        let raio = parseFloat(data.raio);
+        let latitude = parseFloat(data.latitude);
+        let longitude = parseFloat(data.longitude);
+
+        if (!isNaN(latitude) && !isNaN(longitude)) {
+          LAT_EMPRESA = latitude;
+          LNG_EMPRESA = longitude;
+        }
+
+        if (!isNaN(raio) && raio > 0) {
+          document.querySelector('#txtRaioMaximoEntrega').value = raio;
+          document.querySelector('#lblRaioAtual').innerText = `Raio atual: ${raio} km`;
+        }
+
+        setTimeout(() => {
+          config.method.iniciarMapaRaioEntrega();
+        }, 300);
+      },
+      (error) => {
+        app.method.loading(false);
+        console.log('error', error);
+      }
+    );
+  },
+
+  salvarRaioEntrega: () => {
+    let raio = parseFloat(document.querySelector('#txtRaioMaximoEntrega').value.trim());
+
+    if (isNaN(raio) || raio <= 0) {
+      app.method.mensagem('Informe um raio máximo de entrega válido.');
+      return;
+    }
+
+    let dados = {
+      raio: raio
+    };
+
+    app.method.loading(true);
+
+    app.method.post('/entrega/raio', JSON.stringify(dados),
+      (response) => {
+        app.method.loading(false);
+
+        if (response.status == "error") {
+          app.method.mensagem(response.message);
+          return;
+        }
+        app.method.mensagem(response.message, 'green');
+        document.querySelector('#lblRaioAtual').innerText = `Raio atual: ${raio} km`;
+        config.method.iniciarMapaRaioEntrega();
+      },
+      (error) => {
+        app.method.loading(false);
+        console.log('error', error);
+      }
+    );
   },
 
   removerTaxaDistancia: () => {
@@ -852,7 +1118,8 @@ config.method = {
     }  
   )
 
-  },
+  }
+
 };
 
 config.template = {
@@ -863,16 +1130,11 @@ config.template = {
     <td>\${tempo}</td>
     <td>\${status}</td>
     <td>
-      <div class="dropdown">
-        <button class="btn btn-white btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="fas fa-ellipsis-v"></i>
-        </button>
-        <div class="dropdown-menu">
-          \${acoes}
-          <a href="#" class="dropdown-item color-red" onclick="config.method.abrirModalRemoverTaxaDistancia('\${idtaxaentrega}')">
-            <i class="fas fa-trash-alt"></i>&nbsp;<b>Remover</b>
-          </a>
-        </div>
+      <div class="d-flex">
+        \${acoes}
+        <a href="#" class="btn btn-sm btn-white text-danger" onclick="config.method.abrirModalRemoverTaxaDistancia('\${idtaxaentrega}')" title="Remover">
+          <i class="fas fa-trash-alt"></i>
+        </a>
       </div>
     </td>
   </tr>`
